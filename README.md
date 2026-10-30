@@ -1,51 +1,43 @@
-# ZENDRIVE — Add your own climate music
+# ZENDRIVE — Double-click Music Edition
 
-This is a GitHub Pages-ready, static version of ZENDRIVE. No build tools or server backend are needed.
+All eight MP3 files you supplied are INCLUDED in their climate folders. The game works by extracting this ZIP and **double-clicking `index.html`** in Chrome or Edge, without Python or a local server. Keep the `music` directory beside `index.html` (do not open `index.html` from within the ZIP preview).
 
-## Add songs
+## Play
+1. Right-click the downloaded ZIP and select **Extract All**.
+2. Open the extracted `ZENDRIVE_DoubleClick_Ready` folder.
+3. Double-click **index.html** and choose **PLAY** in the browser.
+4. Choose a climate on the game's phone. Its bundled music will play. Press **N** to shuffle another track when a climate has multiple songs.
 
-1. Copy your MP3 files into the climate subfolders under `music/`.
-2. Open `music/library.js` in a text editor.
-3. Add one `{ file, title, artist }` entry for each song. The `file` path is relative to `index.html`.
+### Important: Internet is still required to load the 3D engine
+The game uses the free Three.js r128 rendering library from a CDN. Your own MP3s play locally and do **not** require internet, but the 3D game needs internet access to download Three.js unless you've separately supplied a local copy of the engine. This package has a fallback across three CDNs. No server is necessary.
 
-Example for two Dawn songs:
+## Climate songs bundled
+- `dawn` — `music/dawn/Roary.mp3`
+- `golden-hour` — `music/golden-hour/Golden_hour.mp3`
+- `misty-forest` — `music/misty-forest/Chubina.mp3`
+- `midnight-rain` — `music/midnight-rain/DC.mp3`
+- `starlit-calm` — `music/starlit-calm/Missing.mp3`
+- `snowfall` — `music/snowfall/Leanin.mp3`
+- `neon-overdrive` — `music/neon-overdrive/Flamings.mp3`
+- `midnight-city` — `music/midnight-city/SimpsonWave1995.mp3`
 
-```js
-window.ZENDRIVE_MUSIC = {
-  dawn: [
-    { file: "music/dawn/sunrise.mp3", title: "Sunrise", artist: "Rio" },
-    { file: "music/dawn/morning-drive.mp3", title: "Morning Drive", artist: "Rio" },
-  ],
-  "golden-hour": [],
-  "misty-forest": [],
-  "midnight-rain": [],
-  "starlit-calm": [],
-  snowfall: [],
-  "neon-overdrive": [],
-  "midnight-city": [],
-};
-```
+## Sky pulsing
+For direct `file://` opening, the sky follows a precomputed bass/beat envelope derived from each provided MP3. This keeps sound audible and gives musical sky motion without the local-origin restrictions on Web Audio analysis. On GitHub Pages/localhost, the game uses its live spectrum analyser instead. The beat envelopes are stored in `music/beatmaps.js` and do not contain audio.
 
-Keep all eight climate keys; don't rename the directories without also updating the file paths.
-When you choose a climate on the in-game phone, ZENDRIVE randomly plays a track from that climate. N/Next shuffles to a different song in the same climate. When it ends, another is selected automatically. Empty climate playlists use the original generated music. The visual climate is still controlled by the phone. The real MP3 audio drives the sky's subtle beat pulse; generated fallback uses a rhythm approximation.
+## Adding more songs
+Place another MP3 into the relevant `music/<climate>/` folder, then add another `{ file: "music/.../new.mp3", title: "...", artist: "..." }` entry in `music/library.js`. The game will randomly select a song in that climate. Additional songs won't have precomputed beat maps in direct-file mode unless you generate them; the game will use a gentle fallback pulse for those songs. Playback itself still works.
 
-## GitHub Pages deployment
-
-1. Create a GitHub repository (for example `zendrive`).
-2. Upload the CONTENTS of this folder (not the outer folder itself) so `index.html` is at the repository root and `music/library.js` and the music subfolders are alongside it.
-3. Go to **Settings > Pages > Build and deployment** and select **Deploy from a branch**, `main`, `/(root)`, then Save.
-4. Your project will normally be served at `https://YOUR-USERNAME.github.io/zendrive/`.
-5. To add or change music later, upload the audio files and edit `music/library.js`, then commit the changes.
-
-The songs must be in the deployed repository. Merely referencing local Windows paths such as `C:\Music\song.mp3` does not work on GitHub Pages. File names are case-sensitive on GitHub Pages and should be kept lowercase with hyphens. Use audio that you have the right to distribute. Pages sites are publicly accessible.
-
-## Local testing
-
-Run `python -m http.server 8000` from this folder, then open `http://localhost:8000` in your browser. Click Play to unlock Web Audio (browser policy). The game requires an internet connection to load Three.js from its CDN.
+## Publish with GitHub Pages
+Upload this folder's contents to a GitHub repo and enable **Settings → Pages → Deploy from branch → main → / (root)**. Be sure you have redistribution rights for any songs you publish publicly. GitHub Pages may impose usage and file size limits; the eight supplied MP3s total about 57 MB.
 
 ## Troubleshooting
+- If the page says the 3D engine could not load, connect to the internet and reload. The MP3s are already present, but Three.js is loaded via a CDN.
+- If the game starts but songs won't play, press the on-screen PLAY button to satisfy autoplay policies, and check the Console for an error from the game.
+- Windows may hide filename extensions: the audio files must remain `.mp3` and the `music` folder must stay alongside `index.html`.
 
-- **No song plays:** Check `music/library.js` is loaded and the file path matches (case-sensitive). Open DevTools > Network to look for HTTP 404s. Use MP3 for broad browser compatibility.
-- **Only original generated music:** The selected climate has an empty playlist or a track could not be loaded. The game gracefully falls back to generated music.
-- **Sky not reacting:** Make sure a real track is playing and audio isn't paused/muted. The beat effect is intentionally subtle.
-- **Huge files:** Compress music before upload, e.g. MP3 at 128–192 kbps. GitHub has per-file and repository usage limits.
+
+## Audio mixer and song fades
+
+Open **CONTROLS** from the main or pause menu. The **Vehicle sound** and **Music** sliders control independent channels (0–100%); they retain their settings in browsers that allow local storage. Vehicle sound includes engine, tyre, wind, weather, collisions and other game effects. Music includes the MP3 playlists and generated fallback soundtrack. The pause-menu **SOUND** switch mutes/unmutes both without changing the slider settings.
+
+Songs fade in over about **2.1 seconds**. Selecting another climate or pressing **N** fades out the current song over **1.15 seconds** before fading in the next. Songs also fade out naturally during their last **2.6 seconds** before the next random track plays. MP3s still work by double-clicking `index.html` (internet is needed for the 3D engine).

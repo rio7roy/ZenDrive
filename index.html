@@ -106,6 +106,10 @@ canvas{display:block;position:fixed;inset:0}
 #fuel.night text{fill:#1fb85a}#fuel.night #tk{stroke:#1fb85a;filter:drop-shadow(0 0 3px #0e8a3c)}#fuel.night svg{filter:drop-shadow(0 0 9px #1fb85a)}
 #fuel.night text{fill:#ff2a2a}#fuel.night #tk{stroke:#ff2a2a;filter:drop-shadow(0 0 3px #e01010)}#fuel.night svg{filter:drop-shadow(0 0 9px #e02020)}#fuel.night svg>circle{fill:#050505}#fuel.night #nd line{stroke:#ff3b30}#fuel.night #nd circle{fill:#ff3b30}
 
+/* Main-menu Play: 0.75 s to black, then 0.75 s back to the game. */
+#play-transition{position:fixed;inset:0;z-index:70;background:#000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .75s ease-in-out}
+#play-transition.active{visibility:visible;pointer-events:auto}
+#play-transition.to-black{opacity:1}
 /* Infinite boost is an unlimited reserve, not an always-on accelerator. */
 #cheat-toast{position:fixed;top:29%;left:50%;transform:translate(-50%,-12px);z-index:18;opacity:0;pointer-events:none;text-align:center;white-space:nowrap;font-size:clamp(18px,3vw,30px);font-weight:700;letter-spacing:.22em;color:#effcff;text-shadow:0 0 14px #7beeff,0 0 38px #1898ff;transition:opacity .5s ease,transform .5s ease}
 #cheat-toast small{display:block;margin-top:8px;font-size:11px;letter-spacing:.28em;color:#9cdfff}
@@ -178,7 +182,20 @@ body.hide-shortcuts #mp .key-tip{opacity:0}body.hide-shortcuts #mp .phone-tip,bo
 #boost-fuel-warning small{display:block;margin-top:6px;font-size:10px;letter-spacing:.12em;color:#ddd}
 @media(max-width:700px){#boost-fuel-warning{top:calc(92px + env(safe-area-inset-top,0px))}#boost-fuel-warning strong{font-size:12px}#boost-fuel-warning small{font-size:9px}}
 
+/* Independent, accessible music and vehicle volume controls. */
+.audio-settings{width:100%;margin:8px 0 5px;padding:16px 18px;border:1px solid #ffffff24;border-radius:9px;background:rgba(255,255,255,.045);text-align:left}
+.audio-settings .control-section{margin:0 0 12px}
+.audio-slider-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(120px,1.5fr) 43px;align-items:center;gap:14px;margin:13px 0;font-size:12px;color:#e3e9f3}
+.audio-slider-row label{cursor:pointer}
+.audio-slider-row output{text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:#fff}
+.audio-slider-row input[type=range]{width:100%;height:24px;margin:0;accent-color:#84c4ff;cursor:pointer;touch-action:auto}
+.audio-settings small{display:block;margin-top:10px;color:#b1bbcc;font-size:10.5px;line-height:1.6}
+@media(max-width:430px){.audio-settings{padding:14px 12px}.audio-slider-row{grid-template-columns:1fr 1.3fr 34px;gap:8px;font-size:11px}}
+/* Audio status only appears if an MP3 fails to load or playback is blocked. */
+#music-error-toast{position:fixed;z-index:24;left:50%;bottom:25%;transform:translate(-50%,10px);max-width:min(550px,90vw);background:#0b1220e8;border:1px solid #ffffff55;border-radius:9px;box-shadow:0 8px 30px #0009;padding:12px 17px;color:#fff;font-size:12px;line-height:1.5;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
+#music-error-toast.on{opacity:1;transform:translate(-50%,0)}
 </style></head><body>
+<div id="music-error-toast" role="status" aria-live="polite"></div>
 <div id="pause" class="menu-layer" role="dialog" aria-modal="true" aria-label="Game paused">
   <div class="menu-content">
     <div class="menu-eyebrow">THE ROAD CAN WAIT</div>
@@ -207,17 +224,25 @@ body.hide-shortcuts #mp .key-tip{opacity:0}body.hide-shortcuts #mp .phone-tip,bo
       <div class="control-item"><span>Autodrive</span><kbd>Q</kbd></div>
       <div class="control-item"><span>Return to road</span><kbd>R</kbd></div>
       <div class="control-item"><span>Open / Close phone</span><kbd>P</kbd></div>
-      <div class="control-item"><span>Next song in climate</span><kbd>N</kbd></div>
+      <div class="control-item"><span>Next climate / season</span><kbd>N</kbd></div>
       <div class="control-item"><span>Pause / Resume</span><kbd>ESC</kbd></div>
     </div>
-    <div class="control-section">Touch &amp; music</div><p class="touch-note">Pick a climate on the phone to start a randomly chosen track from its playlist. Press N to shuffle another song in that climate. Tracks are configured in music/library.js.</p>
+    <div class="control-section">Touch &amp; music</div><p class="touch-note">Pick a climate on the phone to start a randomly chosen track from its playlist. Press N to cycle to the next climate. By default each finished song advances to the next climate; selecting a climate on the phone repeats its own playlist until you change climates. The phone next/previous buttons shuffle songs within that climate. Tracks are configured in music/library.js.</p>
     <p class="touch-note">Hold the screen to accelerate. Press the left or right half to steer. Double-tap the road and hold the second touch to boost; lift your finger to stop. Tap the mini-player to open your phone; use its playback controls to play, pause, or change songs. Fuel is restored at roadside stations.</p>
+    <section class="audio-settings" aria-label="Sound settings">
+      <div class="control-section">Sound mixer</div>
+      <div class="audio-slider-row"><label for="vehicle-volume">Vehicle sound</label><input id="vehicle-volume" type="range" min="0" max="100" step="1" value="40" aria-label="Engine and tyre sound volume"><output id="vehicle-volume-value" for="vehicle-volume">40%</output></div>
+      <div class="audio-slider-row"><label for="music-volume">Music</label><input id="music-volume" type="range" min="0" max="100" step="1" value="4" aria-label="Song volume"><output id="music-volume-value" for="music-volume">4%</output></div>
+      <div class="audio-slider-row"><label for="effects-volume">Other sound effects</label><input id="effects-volume" type="range" min="0" max="100" step="1" value="25" aria-label="Weather, collisions, and effects volume"><output id="effects-volume-value" for="effects-volume">25%</output></div>
+      <small>Vehicle = engine and tyres; Effects = collisions, wind, weather, and environment. Skipping or changing climate starts the next track within 0.35 seconds and completes its fade-in within about 2 seconds. Natural track endings fade out over the last 3 seconds. SOUND mutes all three.</small>
+    </section>
     <div class="control-section">Quick vehicle settings</div>
     <div id="hud" class="quick-controls"><button id="bv" type="button">🚗 Car</button><button id="bc" type="button">👁 Camera</button><button id="bz" type="button">🌿 Cruise</button><button id="bl" type="button">Drive: Left</button></div>
     <button id="close-controls" class="menu-button primary close-controls" type="button">BACK</button>
   </div>
 </div>
-<canvas id="fx"></canvas><canvas id="mm" width="300" height="180"></canvas><div id="warn"></div><div id="grn"></div><div id="hintmsg">Press SHIFT to boost</div><div id="phone-reminder" role="status" aria-live="polite">Press <kbd>P</kbd> to pull out your phone</div><div id="cheat-toast" role="status" aria-live="polite">CHEAT ACTIVATED <small>INFINITE BOOST</small></div><div id="boost-fuel-warning" role="status" aria-live="polite"><strong>LOW FUEL</strong><small>BOOST UNAVAILABLE · FIND A GAS STATION</small></div><div id="ad">Autodrive on</div><div id="oof">Out of fuel<button id="oofb">Reset</button></div><div id="rr">Off the road · press R to return</div><div id="mp"><div class="mini-cover"><span class="key-tip phone-tip" aria-hidden="true">(P)</span><div id="mpt"></div></div><div><b id="mpn"></b><i><u id="mpb"></u></i></div><button id="mv0" aria-label="Previous song">⏮</button><button id="mv1" aria-label="Next song">⏭<span class="key-tip next-tip" aria-hidden="true">(N)</span></button><div id="mpv"><s></s><s></s><s></s></div></div><div id="fuel"><b><i id="fi"></i></b><em id="fm"></em><svg viewBox="-50 -50 100 100"><circle r="47" fill="#f3ead8" stroke="#6b4426" stroke-width="6"/><g stroke="#111" stroke-width="1.8"><line y1="-40" y2="-34" transform="rotate(-120)"/><line y1="-40" y2="-34" transform="rotate(-90)"/><line y1="-40" y2="-34" transform="rotate(-60)"/><line y1="-40" y2="-34" transform="rotate(-30)"/><line y1="-40" y2="-34"/><line y1="-40" y2="-34" transform="rotate(30)"/><line y1="-40" y2="-34" transform="rotate(60)"/><line y1="-40" y2="-34" transform="rotate(90)"/><line y1="-40" y2="-34" transform="rotate(120)"/></g><text x="-27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">E</text><text x="27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">F</text><g id="nd"><line y2="-33" stroke="#7a2a14" stroke-width="2.4"/></g><circle r="4.5" fill="#6b4426"/></svg></div><div id="hint">W/S throttle · A/D steer · Space drift · Shift boost · touch to drive<br>C camera · V vehicle · Z cruise · P phone · N next song · <span id="spd">0 km/h</span></div>
+<canvas id="fx"></canvas><canvas id="mm" width="300" height="180"></canvas><div id="warn"></div><div id="grn"></div><div id="hintmsg">Press SHIFT to boost</div><div id="phone-reminder" role="status" aria-live="polite">Press <kbd>P</kbd> to pull out your phone</div><div id="cheat-toast" role="status" aria-live="polite">CHEAT ACTIVATED <small>INFINITE BOOST</small></div><div id="boost-fuel-warning" role="status" aria-live="polite"><strong>LOW FUEL</strong><small>BOOST UNAVAILABLE · FIND A GAS STATION</small></div><div id="ad">Autodrive on</div><div id="oof">Out of fuel<button id="oofb">Reset</button></div><div id="rr">Off the road · press R to return</div><div id="mp"><div class="mini-cover"><span class="key-tip phone-tip" aria-hidden="true">(P)</span><div id="mpt"></div></div><div><b id="mpn"></b><i><u id="mpb"></u></i></div><button id="mv0" aria-label="Previous song">⏮</button><button id="mv1" aria-label="Next song">⏭</button><div id="mpv"><s></s><s></s><s></s></div></div><div id="fuel"><b><i id="fi"></i></b><em id="fm"></em><svg viewBox="-50 -50 100 100"><circle r="47" fill="#f3ead8" stroke="#6b4426" stroke-width="6"/><g stroke="#111" stroke-width="1.8"><line y1="-40" y2="-34" transform="rotate(-120)"/><line y1="-40" y2="-34" transform="rotate(-90)"/><line y1="-40" y2="-34" transform="rotate(-60)"/><line y1="-40" y2="-34" transform="rotate(-30)"/><line y1="-40" y2="-34"/><line y1="-40" y2="-34" transform="rotate(30)"/><line y1="-40" y2="-34" transform="rotate(60)"/><line y1="-40" y2="-34" transform="rotate(90)"/><line y1="-40" y2="-34" transform="rotate(120)"/></g><text x="-27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">E</text><text x="27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">F</text><g id="nd"><line y2="-33" stroke="#7a2a14" stroke-width="2.4"/></g><circle r="4.5" fill="#6b4426"/></svg></div><div id="hint">W/S throttle · A/D steer · Space drift · Shift boost · touch to drive<br>C camera · V vehicle · Z cruise · P phone · N next climate · <span id="spd">0 km/h</span></div>
+<div id="play-transition" aria-hidden="true"></div>
 <div id="start" class="menu-layer" role="dialog" aria-modal="true" aria-label="ZENDRIVE main menu">
   <div class="menu-content">
     <h1>ZENDRIVE</h1><div class="menu-rule"></div>
@@ -242,6 +267,7 @@ body.hide-shortcuts #mp .key-tip{opacity:0}body.hide-shortcuts #mp .phone-tip,bo
 <script>if(!window.THREE)document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');</script>
 <script>if(!window.THREE)document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');</script>
 <script src="./music/library.js"></script>
+<script src="./music/beatmaps.js"></script>
 <script>
 if(window.THREE){
 const $=id=>document.getElementById(id),T=THREE;
@@ -253,21 +279,38 @@ const SONGS=[
 {n:'Starlit Calm',m:'Dreamy',e:'✨',r:62,mi:0,b:48,top:'#03030f',bot:'#1d2a5a',fog:.007,sun:[.3,.4,-1],sc:'#9fb4ff',si:.2,hm:.45,g:'#26374a',tr:'#1c3140',st:1},
 {n:'Snowfall',m:'Peaceful',e:'❄️',r:55,mi:0,b:52,top:'#aebbd0',bot:'#eef2f7',fog:.016,sun:[.2,.2,-1],sc:'#ffffff',si:.55,hm:.9,g:'#e8eef5',tr:'#cfdce6',sn:1}
 ].map(s=>({rn:0,sn:0,st:0,lf:0,td:.7,bn:0,fl:0,tf:0,bl:.5,...s}));
-let cur=1,playing=true,songT=0,Q=[],PL=[],bt,paused=false,gameStarted=false,gameplaySeconds=0,phoneUsed=false,phoneReminderTriggered=false,phoneReminderUntil=0,muted=false,masterGain=null;
+let cur=1,playing=true,songT=0,Q=[],PL=[],bt,paused=false,gameStarted=false,gameplaySeconds=0,phoneUsed=false,phoneReminderTriggered=false,phoneReminderUntil=0,muted=false,masterGain=null,vehicleBus=null,musicBus=null,effectsBus=null;
+// Slider values persist when the browser permits local storage (including file://).
+function savedVolume(key,fallback){try{const x=localStorage.getItem(key);if(x===null)return fallback;const v=Number(x);return Number.isFinite(v)?Math.max(0,Math.min(1,v)):fallback}catch(_){return fallback}}
+// New mixer defaults apply once, without being overridden by the old two-slider settings.
+let vehicleVolume=savedVolume('zendrive_vehicle_volume_v2',.40),
+    musicVolume=savedVolume('zendrive_music_volume_v2',.04),
+    effectsVolume=savedVolume('zendrive_effects_volume_v2',.25);
 const pz=()=>{if(!gameStarted)return;paused=!paused;if(paused){cancelDrivePointer();keys.Shift=0;P.bo=0;trackAudio.pause();clearTimeout(tmr)}$('pause').classList.toggle('on',paused);if(AC){if(paused)AC.suspend();else{AC.resume();if(customTrackActive&&playing)resumeCustomAudio();else if(playing)sched()}}};
 SONGS.push({rn:0,sn:0,st:0,lf:0,td:.7,bn:0,fl:0,tf:0,bl:.5,n:'Neon Overdrive',m:'Energetic',e:'🎸',r:45,mi:1,b:112,top:'#2a1050',bot:'#ff7a3d',fog:.012,sun:[.1,.15,-1],sc:'#ff9a5a',si:.7,hm:.55,g:'#3a4a40',tr:'#2f4a3a',w:'sawtooth',pp:.9});
-SONGS.push({rn:0,sn:0,st:.3,lf:0,td:.05,bn:0,fl:0,tf:1,bl:.5,hl:1,ci:1,city:1,lanes:1,n:'Midnight City',m:'Neon',e:'🌃',r:60,mi:1,b:100,top:'#12082e',bot:'#5a2a7a',fog:.012,sun:[.2,.25,-1],sc:'#c070ff',si:.25,hm:.45,g:'#2a2f38',tr:'#2a3140',w:'sawtooth',pp:.8});
+SONGS.push({rn:0,sn:0,st:.3,lf:0,td:.05,bn:0,fl:0,tf:1,bl:.5,hl:1,ci:1,city:1,lanes:1,n:'Midnight City',m:'Neon',e:'🌃',r:60,mi:1,b:100,top:'#12082e',bot:'#5a2a7a',fog:.026,sun:[.2,.25,-1],sc:'#c070ff',si:.25,hm:.45,g:'#2a2f38',tr:'#2a3140',w:'sawtooth',pp:.8});
 // biome per song: tree density td, broadleaf share bl, benches bn, flowers fl, falling leaves lf, traffic tf
 [{td:.75,bn:1,fl:1,bl:1,tr:'#7bc47a'},{td:.7,bn:1,lf:1,bl:1,tr:'#d0702e',g:'#a8873c'},{td:.95,bl:0},{td:.7,bn:1,lf:1,bl:1,tr:'#9a4220',g:'#4a4a34'},{td:.5,bn:1,fl:1,bl:1},{td:.85,bl:0},{td:.25,tf:1,bl:.3}].forEach((o,i)=>Object.assign(SONGS[i],o));let BI=SONGS[1];
 // Climate is the visual world; tracks within it are independently selected music files.
 // Customize playlists in music/library.js; you never need to edit this HTML.
 const CLIMATE_KEYS=['dawn','golden-hour','misty-forest','midnight-rain','starlit-calm','snowfall','neon-overdrive','midnight-city'];
+// Music progression order is independent of the internal climate indices (preserves biomes).
+// Golden Hour, Midnight City, Neon Overdrive, then Dawn/Misty/Rain/Starlit/Snowfall.
+const CLIMATE_PLAY_ORDER=[1,7,6,0,2,3,4,5];
+const orderedClimateIndices=()=>CLIMATE_PLAY_ORDER.slice();
+const nextClimate=(i,d=1)=>{
+  const at=CLIMATE_PLAY_ORDER.indexOf(i);
+  return CLIMATE_PLAY_ORDER[(at+d+CLIMATE_PLAY_ORDER.length)%CLIMATE_PLAY_ORDER.length];
+};
+// Explicit climate selection on the in-game phone pins the season. Automated play / N does not.
+let seasonPinned=false;
+const nextSeason=()=>pick(nextClimate(cur),[],false);
 const CLIMATE_MUSIC=(window.ZENDRIVE_MUSIC&&typeof window.ZENDRIVE_MUSIC==='object')?window.ZENDRIVE_MUSIC:{};
 const climateTracks=i=>{const entries=CLIMATE_MUSIC[CLIMATE_KEYS[i]];return Array.isArray(entries)?entries.filter(e=>e&&typeof e.file==='string'&&e.file.trim()):[]};
 const qn=d=>{
   // Next/previous stays in the current climate if there are custom tracks.
-  if(gameStarted&&climateTracks(cur).length){chooseClimateTrack(cur);return}
-  const L=Q.length?Q:SONGS.map((_,i)=>i),j=L.indexOf(cur);
+  if(gameStarted&&climateTracks(cur).length){requestClimateTrack(cur);return}
+  const L=Q.length?Q:orderedClimateIndices(),j=L.indexOf(cur);
   pick(L[((j<0?(d>0?-1:0):j)+d+L.length)%L.length],Q)
 };
 const S={top:new T.Color,bot:new T.Color,sc:new T.Color,g:new T.Color,tr:new T.Color,sun:new T.Vector3,fog:0,si:0,hm:0,rn:0,sn:0,st:0,lf:0,hl:0,ci:0},tg={top:new T.Color,bot:new T.Color,sc:new T.Color,g:new T.Color,tr:new T.Color,sun:new T.Vector3};
@@ -590,7 +633,7 @@ TB3.geometry=mg([[ico(1.35,1),0,3.8,0,1,.85,1],[ico(1.05,1),1.1,3.3,.4,1,.9,1],[
 // breakable benches: debris pieces fly off when hit; broken benches stay gone
 const BRK=new Set(),DS=im(new T.BoxGeometry(.8,.1,.5),0x7a5530,40),DB=im(new T.BoxGeometry(.8,.5,.07),0x7a5530,40);DS.count=DB.count=0;let PCS=[],benches=[];
 function fly(dt){let a=0,c=0;PCS=PCS.filter(p=>p.t<6);PCS.forEach(p=>{p.t+=dt;p.vy-=14*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;const g=H(p.x,p.z)+.1;if(p.y<g){p.y=g;p.vy*=-.35;p.vx*=.7;p.vz*=.7;p.wx*=.6;p.wy*=.6;p.wz*=.6}p.rx+=p.wx*dt;p.ry+=p.wy*dt;p.rz+=p.wz*dt;D2.position.set(p.x,p.y,p.z);D2.rotation.set(p.rx,p.ry,p.rz);D2.scale.set(1,1,1);D2.updateMatrix();if(p.k){if(c<40)DB.setMatrixAt(c++,D2.matrix)}else if(a<40)DS.setMatrixAt(a++,D2.matrix)});DS.count=a;DB.count=c;DS.instanceMatrix.needsUpdate=DB.instanceMatrix.needsUpdate=true}
-function extras(dt){if(pend){trv+=Math.abs(P.v)*dt;if(trv>170){BI=pend;pend=null}}const tl=VS.car.o.userData.tl;if(tl){const br=(keys.s||keys.ArrowDown||keys[' '])&&P.v>.5;tl[0].color.setHex(br?0xff2a2a:0x6a0a0a);tl[1].color.setHex(P.v<-.5?0xffffff:0x44403a)}
+function extras(dt){if(pend){trv+=Math.abs(P.v)*dt;if(trv>170){BI=pend;pend=null;if(BX!==1e9&&BZ!==1e9)bldgs(BX,BZ)}}const tl=VS.car.o.userData.tl;if(tl){const br=(keys.s||keys.ArrowDown||keys[' '])&&P.v>.5;tl[0].color.setHex(br?0xff2a2a:0x6a0a0a);tl[1].color.setHex(P.v<-.5?0xffffff:0x44403a)}
 $('warn').classList.toggle('on',!infiniteBoost&&P.fu<.15);extras2(dt);{const o=bo(ri),a=PT[ri],dd=Math.min(Math.hypot(P.x-PX[ri],P.z-PZ[ri]),o>0?Math.hypot(P.x-PX[ri]-Math.cos(a)*o,P.z-PZ[ri]+Math.sin(a)*o):1e9);offT=dd>22?offT+dt:0;$('rr').classList.toggle('on',offT>2.5)}const cl=$('phone').classList.contains('closed');if(!cl&&!phHov&&performance.now()-phAct>10000)$('phone').classList.add('closed');$('mp').style.display=cl?'flex':'none';if(cl){const s=SONGS[cur];$('mpt').style.background='linear-gradient(160deg,'+s.top+','+s.bot+')';$('mpt').textContent=s.e;$('mpn').textContent=s.n;$('mpb').style.width=Math.min(100,songT/musicDuration()*100)+'%'}
 benches.forEach(b=>{if(Math.hypot(P.x-b[0],P.z-b[1])<1.8&&Math.abs(P.v)>2&&!BRK.has(b[3])){BRK.add(b[3]);const fx0=-Math.sin(P.d)*P.v,fz0=-Math.cos(P.d)*P.v;for(let i=0;i<4;i++){const o=i%2?.4:-.4;PCS.push({k:i<2?0:1,x:b[0]+o*Math.cos(b[4]),y:b[2]+.5,z:b[1]-o*Math.sin(b[4]),vx:fx0*.9+(Math.random()-.5)*6,vy:4+Math.random()*5,vz:fz0*.9+(Math.random()-.5)*6,rx:0,ry:b[4],rz:0,wx:(Math.random()-.5)*14,wy:(Math.random()-.5)*14,wz:(Math.random()-.5)*14,t:0})}P.v*=.88;sfx&&sfx('bench');road2()}});signHit();fly(dt);fly2(dt)}
 // R: snap back onto the nearest point of the road, facing along it; biome change is delayed by distance travelled
@@ -693,7 +736,7 @@ const RFl=im(new T.BoxGeometry(.07,.45,.07),0xaa2222,NW+1),RFr=im(new T.BoxGeome
 SM1=im(new T.SphereGeometry(.55,12,10).translate(0,.55,0),0xffffff,12),SM2=im(new T.SphereGeometry(.4,12,10).translate(0,1.4,0),0xffffff,12),SM3=im(new T.SphereGeometry(.28,12,10).translate(0,2,0),0xffffff,12),SMd=im(new T.SphereGeometry(1,10,8),0xffffff,30);SMd.count=0;
 const CTm=new Map(),SNm=new Map(),cityAt=m=>{let f=CTm.get(m);if(f===undefined){f=BI.city?1:0;CTm.set(m,f)}return f},snowAt=m=>{let f=SNm.get(m);if(f===undefined){f=BI.sm?1:0;SNm.set(m,f)}return f};
 $('mv0').onclick=e=>{e.stopPropagation();qn(-1)};$('mv1').onclick=e=>{e.stopPropagation();qn(1)};$('oofb').onclick=()=>{P.fu=1;ret();oofT=0};$('bl').onclick=()=>{wx=-wx;$('bl').textContent='Drive: '+(wx<0?'Left':'Right')};
-function extras2(dt){const V=VS[veh].o,c=veh=='car';hitCool-=dt;{const q=lamps.map(l=>[(l[0]-P.x)**2+(l[2]-P.z)**2,l]).sort((a,b)=>a[0]-b[0]);PL4.forEach((pl,i)=>{const e=q[i];if(e){pl.position.set(...e[1]);pl.intensity=S.hl*2.4}else pl.intensity=0})}$('fuel').classList.toggle('night',S.hl>.35);$('nd').setAttribute('transform','rotate('+(infiniteBoost?157:(-120+240*P.fu))+')');HLG.position.copy(V.position);HLG.rotation.copy(V.rotation);HL[0].intensity=S.hl*2.2;BLD.material.emissiveIntensity=.15+S.hl*1.1;HL[1].intensity=c?S.hl*2.2:0;HL[0].position.x=HL[0].target.position.x=c?-.6:0;
+function extras2(dt){const V=VS[veh].o,c=veh=='car';hitCool-=dt;{const q=lamps.map(l=>[(l[0]-P.x)**2+(l[2]-P.z)**2,l]).sort((a,b)=>a[0]-b[0]);PL4.forEach((pl,i)=>{const e=q[i];if(e){pl.position.set(...e[1]);pl.intensity=S.hl*2.4*(1-smooth(140,275,Math.hypot(e[1][0]-P.x,e[1][2]-P.z)))}else pl.intensity=0})}$('fuel').classList.toggle('night',S.hl>.35);$('nd').setAttribute('transform','rotate('+(infiniteBoost?157:(-120+240*P.fu))+')');HLG.position.copy(V.position);HLG.rotation.copy(V.rotation);HL[0].intensity=S.hl*2.2;BLD.material.emissiveIntensity=.15+S.hl*1.1;HL[1].intensity=c?S.hl*2.2:0;HL[0].position.x=HL[0].target.position.x=c?-.6:0;
 RFl.material.color.setRGB(.8+S.hl,.1,.1);RFr.material.color.setRGB(.9+S.hl*.5,.9+S.hl*.5,.8+S.hl*.4);
 oofT=!infiniteBoost&&P.fu<=0?oofT+dt:0;$('oof').classList.toggle('on',oofT>3);const t=performance.now()-T0;$('hintmsg').textContent=(window.matchMedia&&matchMedia('(pointer:coarse)').matches)?'Double-tap & hold to boost':'Press SHIFT to boost';$('hintmsg').classList.toggle('on',!boostHintDismissed&&t>15000&&t<20000);$('ad').classList.toggle('on',!!auto);
 snowmen.forEach(s=>{if(Math.hypot(P.x-s[0],P.z-s[1])<1.5&&Math.abs(P.v)>2&&!SMB.has(s[3])){SMB.add(s[3]);const fx0=-Math.sin(P.d)*P.v,fz0=-Math.cos(P.d)*P.v;[.55,.4,.28].forEach((r,i)=>PSN.push({r,x:s[0],y:s[2]+.5+i*.7,z:s[1],vx:fx0*1.1+(Math.random()-.5)*5,vy:4+Math.random()*5,vz:fz0*1.1+(Math.random()-.5)*5,t:0}));P.v*=.93;sfx&&sfx('snow');road2()}});
@@ -876,9 +919,72 @@ const bridgeStrips=[0,-1,1].map(side=>{
 });
 // city: window-lit towers generated per cell (cached), only on city songs
 const GB=new Map(),BLD=im(new T.BoxGeometry(1,1,1).translate(0,.5,0),0xffffff,300),btx=(()=>{const c=document.createElement('canvas');c.width=64;c.height=128;const x=c.getContext('2d');x.fillStyle='#303444';x.fillRect(0,0,64,128);for(let r=0;r<12;r++)for(let q=0;q<6;q++)if(Math.random()<.55){x.fillStyle=Math.random()<.5?'#ffd98a':'#9ad0ff';x.fillRect(q*10+3,r*10+4,6,6)}const t=new T.CanvasTexture(c);t.magFilter=T.NearestFilter;return t})();
-BLD.material.map=BLD.material.emissiveMap=btx;BLD.material.emissive.setRGB(1,1,1);BLD.material.needsUpdate=true;BLD.count=0;
-function bcell(X,Z){const k=X+','+Z;let r=GB.get(k);if(r!==undefined)return r;r=0;if(BI.ci&&hs(X*3.7,Z*2.9)<.75){const w=14+hs(X,Z*5)*10,x=(X+.5)*30+(hs(Z,X)-.5)*8,z=(Z+.5)*30+(hs(X,Z)-.5)*8;if(rdist(x,z)>w/2+16&&!wet(x,z))r={x,z,w,h:25+hs(X*7,Z*3)*95,d:14+hs(Z*3,X*7)*10,c:[0x8a8f9a,0x6a7080,0xa09890,0x70788a][Math.floor(hs(X*5,Z)*4)]}}if(GB.size>5000)prune(GB,BX,BZ,20);GB.set(k,r);return r}
-function bldgs(cx,cz){let n=0;const t=[];for(let a=-9;a<=9;a++)for(let b=-9;b<=9;b++){const r=bcell(cx+a,cz+b);if(!r||n>=300)continue;put(BLD,n,r.x,H(r.x,r.z)-1,r.z,hs(cx+a,cz+b)<.5?0:Math.PI/2,r.w,r.h,r.d);BLD.setColorAt(n,cc.setHex(r.c));t.push([r.x,r.z,r.w*.55-1]);n++}BLD.count=n;up(BLD);tlb=t;buildingColliders=buildCollisionBins(t)}
+BLD.material.map=BLD.material.emissiveMap=btx;BLD.material.emissive.setRGB(1,1,1);
+// City buildings render at full opacity immediately when streamed in.
+BLD.material.transparent=false;
+BLD.material.opacity=1;
+BLD.material.depthWrite=true;
+BLD.material.needsUpdate=true;
+BLD.count=0;
+BLD.visible=false;
+// City streaming is based on world position, not the currently playing song.
+// Buildings are created in an off-screen staging ring (390-580 m), well before
+// entering the 320 m render radius. Climate changes never clear nearby buildings.
+const BUILD_RENDER_M=320, BUILD_STAGE_MIN_M=390, BUILD_STAGE_MAX_M=580;
+const BUILD_RENDER_SQ=BUILD_RENDER_M*BUILD_RENDER_M;
+const BUILD_STAGE_MIN_SQ=BUILD_STAGE_MIN_M*BUILD_STAGE_MIN_M;
+const BUILD_STAGE_MAX_SQ=BUILD_STAGE_MAX_M*BUILD_STAGE_MAX_M;
+// Only call for cells OUTSIDE the render distance, never beside the car.
+function bcell(X,Z){
+ const key=X+','+Z;
+ if(GB.has(key))return GB.get(key);
+ let r=0;
+ if(hs(X*3.7,Z*2.9)<.75){
+  const w=14+hs(X,Z*5)*10,x=(X+.5)*30+(hs(Z,X)-.5)*8,z=(Z+.5)*30+(hs(X,Z)-.5)*8;
+  if(rdist(x,z)>w/2+16&&!wet(x,z))r={x,z,w,h:25+hs(X*7,Z*3)*95,d:14+hs(Z*3,X*7)*10,c:[0x8a8f9a,0x6a7080,0xa09890,0x70788a][Math.floor(hs(X*5,Z)*4)],seen:false};
+ }
+ GB.set(key,r);
+ return r;
+}
+function stageCityBuildings(){
+ if(!BI.ci)return;
+ const cx=Math.round(P.x/30),cz=Math.round(P.z/30),rad=Math.ceil(BUILD_STAGE_MAX_M/30);
+ for(let a=-rad;a<=rad;a++)for(let b=-rad;b<=rad;b++){
+  const X=cx+a,Z=cz+b,key=X+','+Z;
+  if(GB.has(key))continue;
+  const dx=(X+.5)*30-P.x,dz=(Z+.5)*30-P.z,d2=dx*dx+dz*dz;
+  if(d2>=BUILD_STAGE_MIN_SQ&&d2<=BUILD_STAGE_MAX_SQ)bcell(X,Z);
+ }
+}
+function bldgs(cx,cz){
+ stageCityBuildings();
+ let n=0;const t=[];
+ // Actual 3D instances are pooled; off-screen staged records cost no GPU draw calls.
+ for(let a=-11;a<=11;a++)for(let b=-11;b<=11;b++){
+  const X=cx+a,Z=cz+b,key=X+','+Z,r=GB.get(key);
+  if(!r||n>=BLD.instanceMatrix.count)continue;
+  const dx=r.x-P.x,dz=r.z-P.z;
+  if(dx*dx+dz*dz>BUILD_RENDER_SQ)continue;
+  // Leaving Midnight City must NOT remove a building already in view.
+  // Previously staged (but never visible) buildings remain hidden outside City.
+  if(!BI.ci&&!r.seen)continue;
+  r.seen=true;
+  put(BLD,n,r.x,H(r.x,r.z)-1,r.z,hs(X,Z)<.5?0:Math.PI/2,r.w,r.h,r.d);
+  BLD.setColorAt(n,cc.setHex(r.c));
+  t.push([r.x,r.z,r.w*.55-1]);n++;
+ }
+ BLD.count=n;BLD.visible=n>0;up(BLD);
+ tlb=t;buildingColliders=buildCollisionBins(t);
+ // Only remove cached buildings once they are outside the visible range.
+ // Unseen staging cells may be evicted farther away; they can be restaged later.
+ const keepSq=(BUILD_STAGE_MAX_M+60)**2;
+ for(const [key,r] of GB){
+  if(!r){const [X,Z]=key.split(',').map(Number);const dx=(X+.5)*30-P.x,dz=(Z+.5)*30-P.z;
+   if(dx*dx+dz*dz>keepSq)GB.delete(key);continue;}
+  const dx=r.x-P.x,dz=r.z-P.z,d2=dx*dx+dz*dz;
+  if(d2>keepSq||(!BI.ci&&d2>BUILD_RENDER_SQ))GB.delete(key);
+ }
+}
 // redesigned fuel dial
 {let t='';for(let a=-120;a<=120;a+=15){const M=a%60==0;t+='<line y1="-38" y2="'+(M?-30:-34)+'" transform="rotate('+a+')" stroke-width="'+(M?2:1)+'"/>'}
 document.querySelector('#fuel svg').outerHTML='<svg viewBox="-50 -50 100 100"><circle r="49" fill="#3a2414"/><circle r="45" fill="#8a5a33"/><circle r="40" fill="#f6efe0"/><path d="M-31.2 18A36 36 0 0 1 -36 0" fill="none" stroke="#b8321f" stroke-width="3.5"/><g stroke="#111">'+t+'</g><text x="-22" y="17" font-size="12" font-family="Georgia,serif" font-weight="700" fill="#111" text-anchor="middle">E</text><text x="22" y="17" font-size="12" font-family="Georgia,serif" font-weight="700" fill="#111" text-anchor="middle">F</text><text y="-17" font-size="8" font-family="Georgia,serif" fill="#111" text-anchor="middle">1/2</text><text y="27" font-size="5" font-family="Georgia,serif" fill="#6b4426" text-anchor="middle">FUEL</text><g id="nd"><path d="M-2.4 7L0-34L2.4 7Z" fill="#7a1f12"/><circle r="4.5" fill="#3a2414"/></g></svg>'}
@@ -1287,18 +1393,83 @@ let AC,mus,wind,rain,sq,tyreSquealGain,tyreSquealFilter,bang,sfx,refu,crashfx,en
 const mf=m=>440*2**((m-69)/12);
 // Same-origin MP3s on GitHub Pages (or localhost) feed the built-in Web Audio analyser.
 // The engine and environment sounds stay on the separate existing master bus.
-const trackAudio=new Audio();trackAudio.preload='metadata';
+// file:// pages have an opaque origin in Chrome. Connecting their local MP3
+// media element to a Web Audio analyser can produce silence even while
+// audio.paused === false. Use direct HTMLAudioElement playback for file://.
+// On localhost / HTTPS we retain analyser-backed, beat-reactive audio.
+const DIRECT_FILE_AUDIO=location.protocol==='file:';
+const trackAudio=new Audio();trackAudio.preload='auto';
+trackAudio.volume=DIRECT_FILE_AUDIO?0:1;trackAudio.playsInline=true;
+let musicErrorTimeout=0;
+function musicError(message){
+  console.warn('ZENDRIVE MUSIC:',message);
+  const el=document.getElementById('music-error-toast');
+  if(!el)return;
+  el.textContent=message;el.classList.add('on');
+  clearTimeout(musicErrorTimeout);
+  musicErrorTimeout=setTimeout(()=>el.classList.remove('on'),6500);
+}
+
 let customTrackActive=false,activeTrack=null,customMusicGain=null,beatAnalyser=null,beatBins=null;
+const SONG_FADE_IN=1.6,SONG_FADE_OUT=3,SONG_CHANGE_FADE=.35;
+let musicFadeLevel=0,musicSwitchAction=null;
+// Local MP3s output directly; online MP3s and generated music use the music bus.
+let appliedVehicle=-1,appliedMusic=-1,appliedEffects=-1,appliedFade=-1,appliedMute=null,appliedDirect=-1;
+function applyAudioLevels(){
+  if(AC&&vehicleBus&&Math.abs(appliedVehicle-vehicleVolume)>.0005){
+    vehicleBus.gain.setTargetAtTime(vehicleVolume,AC.currentTime,.035);appliedVehicle=vehicleVolume;
+  }
+  if(AC&&effectsBus&&Math.abs(appliedEffects-effectsVolume)>.0005){
+    effectsBus.gain.setTargetAtTime(effectsVolume,AC.currentTime,.035);appliedEffects=effectsVolume;
+  }
+  const songBusLevel=musicVolume/.85;
+  if(AC&&musicBus&&Math.abs(appliedMusic-songBusLevel)>.0005){
+    musicBus.gain.setTargetAtTime(songBusLevel,AC.currentTime,.035);appliedMusic=songBusLevel;
+  }
+  const remaining=customTrackActive&&Number.isFinite(trackAudio.duration)&&trackAudio.duration>0
+    ?Math.min(1,Math.max(0,(trackAudio.duration-trackAudio.currentTime)/SONG_FADE_OUT)):1;
+  if(AC&&customMusicGain&&!DIRECT_FILE_AUDIO){
+    const gain=.68*musicFadeLevel*remaining;
+    if(Math.abs(appliedFade-gain)>.0007){customMusicGain.gain.setTargetAtTime(gain,AC.currentTime,.025);appliedFade=gain}
+  }
+  if(DIRECT_FILE_AUDIO){
+    const level=customTrackActive&&playing?musicVolume*musicFadeLevel*remaining:0;
+    const volume=muted?0:Math.max(0,Math.min(1,level));
+    if(Math.abs(appliedDirect-volume)>.0007){trackAudio.volume=volume;appliedDirect=volume}
+  }
+  if(AC&&masterGain&&appliedMute!==muted){
+    masterGain.gain.setTargetAtTime(muted?0:.9,AC.currentTime,.08);appliedMute=muted;
+  }
+}
+function advanceMusicFades(dt){
+  if(!gameStarted||paused||!playing)return;
+  if(musicSwitchAction){
+    musicFadeLevel=Math.max(0,musicFadeLevel-dt/SONG_CHANGE_FADE);
+    if(musicFadeLevel<=0){const action=musicSwitchAction;musicSwitchAction=null;action()}
+  }else if(customTrackActive&&!trackAudio.paused){
+    musicFadeLevel=Math.min(1,musicFadeLevel+dt/SONG_FADE_IN);
+  }
+  applyAudioLevels();
+}
+function requestClimateTrack(i,immediate=false){
+  if(!immediate&&customTrackActive&&playing&&!paused&&!trackAudio.paused&&musicFadeLevel>.01){
+    musicSwitchAction=()=>chooseClimateTrack(i); // latest request wins
+    return;
+  }
+  musicSwitchAction=null;
+  chooseClimateTrack(i);
+}
+const failedMusicFiles=new Set(); // skip missing/invalid songs until the next reload
 let selectionSerial=0,skyBeat=0,synthBeat=0,beatBaseline=.07,beatCheckAt=0;
 const audioTitle=t=>t?(t.title||decodeURIComponent((t.file.split('/').pop()||'Song').replace(/\.[^.]+$/,'').replace(/[-_]/g,' '))):SONGS[cur].n;
 const musicDuration=()=>customTrackActive&&Number.isFinite(trackAudio.duration)&&trackAudio.duration>0?trackAudio.duration:180;
 const showTime=t=>Math.floor(Math.max(0,t)/60)+':'+String(Math.floor(Math.max(0,t)%60)).padStart(2,'0');
 function setGeneratedMusic(){
-  customTrackActive=false;activeTrack=null;trackAudio.pause();trackAudio.removeAttribute('src');
+  customTrackActive=false;activeTrack=null;musicFadeLevel=0;trackAudio.pause();trackAudio.removeAttribute('src');
   // Calling load with no src clears the old media and does not request any new file.
   trackAudio.load();skyBeat=0;beatBaseline=.07;
-  if(AC&&mus){mus.gain.setTargetAtTime(playing?.6:0,AC.currentTime,.2);sched()}
-  ui();
+  if(AC&&mus){const t=AC.currentTime;mus.gain.cancelScheduledValues(t);mus.gain.setValueAtTime(0,t);mus.gain.linearRampToValueAtTime(playing?.6:0,t+SONG_FADE_IN);sched()}
+  applyAudioLevels();ui();
 }
 function resumeCustomAudio(){
   if(!customTrackActive||!playing||paused)return;
@@ -1306,56 +1477,185 @@ function resumeCustomAudio(){
   const promise=trackAudio.play();
   if(promise&&promise.catch)promise.catch(e=>{
     if(serial!==selectionSerial||!customTrackActive||paused||!playing||e.name==='AbortError')return;
-    console.warn('ZENDRIVE: Could not play this climate track. Using generated music.',activeTrack&&activeTrack.file,e);
-    setGeneratedMusic();
+    const file=activeTrack&&activeTrack.file;
+    if(e.name==='NotAllowedError'){
+      // Mobile autoplay policy: keep the song queued and let the user tap Play.
+      playing=false;
+      musicError('Audio was blocked by the browser. Tap Play on the phone to start the song.');
+      ui();
+      return;
+    }
+    // The media element also reports decode/network errors through its error event;
+    // the failed-file set prevents the same item being chosen in an infinite loop.
+    musicError('Could not play '+(file||'this song')+' ('+(e.name||'audio error')+').');
+    failCustomTrack(file);
   });
 }
 function chooseClimateTrack(i){
   const list=climateTracks(i);selectionSerial++;
   if(!list.length){setGeneratedMusic();return}
-  // Avoid replaying the same file back-to-back if there is more than one choice.
-  const candidates=list.length>1?list.filter(e=>!activeTrack||e.file!==activeTrack.file):list;
-  const chosen=candidates[Math.floor(Math.random()*candidates.length)]||list[0];
-  activeTrack=chosen;customTrackActive=true;songT=0;skyBeat=0;beatBaseline=.07;
+  const available=list.filter(e=>!failedMusicFiles.has(e.file));
+  if(!available.length){
+    musicError('No playable MP3 files found for '+SONGS[i].n+'. Check the music folder, filenames and extensions.');
+    setGeneratedMusic();return;
+  }
+  // Avoid repeating the same song if multiple playable tracks exist.
+  const candidates=available.length>1?available.filter(e=>!activeTrack||e.file!==activeTrack.file):available;
+  const chosen=candidates[Math.floor(Math.random()*candidates.length)]||available[0];
+  activeTrack=chosen;customTrackActive=true;songT=0;skyBeat=0;beatBaseline=.07;musicFadeLevel=0;
   clearTimeout(tmr);trackAudio.pause();trackAudio.src=chosen.file;trackAudio.load();
-  if(AC&&mus)mus.gain.setTargetAtTime(0,AC.currentTime,.15);
+  if(AC&&mus)mus.gain.setTargetAtTime(0,AC.currentTime,.25);
+  applyAudioLevels();
   if(gameStarted)resumeCustomAudio();ui();
 }
-trackAudio.addEventListener('ended',()=>{if(customTrackActive&&playing){chooseClimateTrack(cur)}});
+function failCustomTrack(file){
+  if(!customTrackActive||!activeTrack||activeTrack.file!==file)return;
+  failedMusicFiles.add(file);
+  // Try another song in the same climate; fall back to built-in music only
+  // when all supplied songs are unavailable. No infinite retry loops.
+  requestClimateTrack(cur,true);
+}
+trackAudio.addEventListener('ended',()=>{
+  if(!customTrackActive||!playing)return;
+  if(musicSwitchAction){const action=musicSwitchAction;musicSwitchAction=null;action()}
+  else if(seasonPinned)requestClimateTrack(cur,true);
+  else nextSeason();
+});
 trackAudio.addEventListener('error',()=>{
   if(customTrackActive&&trackAudio.error){
-    console.warn('ZENDRIVE: Missing/unsupported audio file:',activeTrack&&activeTrack.file);
-    selectionSerial++;setGeneratedMusic();
+    const file=activeTrack&&activeTrack.file,code=trackAudio.error.code;
+    musicError('Song unavailable: '+file+' (audio error '+code+'). Check the name and extension.');
+    failCustomTrack(file);
   }
 });
+// Use tiny precomputed real-song bass envelopes when launched by double-click.
+// Direct file:// audio stays on the native media output to avoid Chrome's opaque-origin
+// Web Audio security restriction, while the sky still follows the original song beats.
+const BEATMAPS=window.ZENDRIVE_BEATMAPS||{};
+const decodedBeatmaps=new Map();
+function offlineBeatAt(file,seconds){
+  const map=BEATMAPS[file];
+  if(!map||!map.data||!Number.isFinite(seconds))return null;
+  let arr=decodedBeatmaps.get(file);
+  if(!arr){
+    try{const text=atob(map.data);arr=Uint8Array.from(text,c=>c.charCodeAt(0));decodedBeatmaps.set(file,arr)}
+    catch(e){console.warn('ZENDRIVE: invalid offline beatmap',file,e);return null}
+  }
+  const index=Math.floor(Math.max(0,seconds)*map.fps);
+  return index<arr.length?arr[index]/255:0;
+}
+// Find a stable rhythm from the supplied real-song beat map exactly once per file.
+// Music time drives the visual pulse; engine, environmental audio, and bass loudness
+// never directly control the sky. Works with file:// and with GitHub Pages.
+const songTempoCache=new Map();
+function songTempo(file){
+  if(songTempoCache.has(file))return songTempoCache.get(file);
+  // Decode the existing 20Hz offline beat envelopes, without changing beatmaps.js.
+  offlineBeatAt(file,0);
+  const source=decodedBeatmaps.get(file),meta=BEATMAPS[file];
+  if(!source||!meta||!meta.fps||source.length<80){songTempoCache.set(file,null);return null}
+  const fps=meta.fps,n=Math.min(source.length,Math.round(fps*105));
+  const onset=new Float32Array(n);
+  let running=0;
+  for(let i=0;i<n;i++){
+    const value=source[i]/255;
+    running+=(value-running)*.23;
+    onset[i]=Math.max(0,value-running);
+  }
+  const scores=[];
+  // 52-170 BPM, including half-time electronic rhythms.
+  for(let lag=Math.max(2,Math.round(fps*60/170));lag<=Math.round(fps*60/52);lag++){
+    let score=0,total=0;
+    for(let i=lag;i<n;i++){score+=onset[i]*onset[i-lag];total+=onset[i]*onset[i]}
+    scores.push({lag,score:score/Math.max(0.001,total)});
+  }
+  scores.sort((a,b)=>b.score-a.score);
+  let chosen=scores[0];
+  if(!chosen||chosen.score<.06){songTempoCache.set(file,null);return null}
+  // Slow half-time harmonics can rank just above the actual beat.
+  // Prefer a plausible faster beat if it is nearly as strongly supported.
+  if(60*fps/chosen.lag<75){
+    const faster=scores.find(p=>60*fps/p.lag>=75&&p.score>=chosen.score*.89);
+    if(faster)chosen=faster;
+  }
+  const lag=chosen.lag;
+  let bestPhase=0,bestStrength=-1;
+  for(let phase=0;phase<lag;phase++){
+    let weight=0;
+    for(let i=phase;i<n;i+=lag)weight+=onset[i];
+    if(weight>bestStrength){bestStrength=weight;bestPhase=phase}
+  }
+  const tempo={period:lag/fps,phase:bestPhase/fps,bpm:60*fps/lag};
+  songTempoCache.set(file,tempo);
+  return tempo;
+}
+function beatPulseForTrack(file,time){
+  const tempo=songTempo(file);
+  if(!tempo||!Number.isFinite(time)||time<0)return 0;
+  const since=((time-tempo.phase)%tempo.period+tempo.period)%tempo.period;
+  // A fast, subtle flash ON the rhythmic beat, not a general brightness oscillation.
+  return .48*Math.exp(-since*15);
+}
 function updateSkyBeat(dt,now){
-  if(!playing||paused||muted){skyBeat*=Math.exp(-dt*5)}
-  else if(customTrackActive&&beatAnalyser&&beatBins&&!trackAudio.paused){
-    if(now-beatCheckAt>=.038){
-      beatCheckAt=now;beatAnalyser.getByteFrequencyData(beatBins);
-      // Bass bins ~45–345Hz; follows real percussive energy, not a fixed BPM timer.
-      let bass=0;for(let j=1;j<=8;j++)bass+=beatBins[j];bass/=8*255;
-      const onset=Math.max(0,bass-beatBaseline);
-      beatBaseline+=(bass-beatBaseline)*.055;
-      skyBeat=Math.max(skyBeat,Math.min(1,onset*4.2));
+  // Beat-pulsing sky is exclusive to Midnight City (7) and Neon Overdrive (6).
+  // Every other climate, including transitions away from those two, stays still.
+  if(cur!==7&&cur!==6){
+    skyBeat=0;synthBeat=0;
+    sky.material.uniforms.pulse.value=0;
+    return;
+  }
+  if(!playing||paused||muted){skyBeat*=Math.exp(-dt*10)}
+  else if(customTrackActive&&!trackAudio.paused){
+    const time=trackAudio.currentTime;
+    const pulse=beatPulseForTrack(activeTrack?.file,time);
+    if(songTempo(activeTrack?.file)){
+      // No loudness-driven flicker; only periodic beat markers can brighten the sky.
+      skyBeat=pulse;
+    }else if(!DIRECT_FILE_AUDIO&&beatAnalyser&&beatBins){
+      // New online tracks without offline maps: detect spaced rhythmic onsets.
+      if(now-beatCheckAt>.045){
+        beatCheckAt=now;beatAnalyser.getByteFrequencyData(beatBins);
+        let bass=0;for(let j=1;j<=8;j++)bass+=beatBins[j];bass/=8*255;
+        const rise=bass-beatBaseline;
+        beatBaseline+=(bass-beatBaseline)*.085;
+        if(rise>.065&&(!updateSkyBeat.lastOnset||time-updateSkyBeat.lastOnset>.35)){
+          updateSkyBeat.lastOnset=time;skyBeat=.38;
+        }
+      }
+      skyBeat*=Math.exp(-dt*12);
+    }else{
+      // Local files need a beatmap to give a truthful beat-synced sky.
+      skyBeat=0;
     }
-    skyBeat*=Math.exp(-dt*4.7);
-  }else{skyBeat=Math.max(skyBeat*Math.exp(-dt*4.7),synthBeat);synthBeat*=Math.exp(-dt*7)}
-  sky.material.uniforms.pulse.value=Math.min(1,skyBeat);
+  }else if(!customTrackActive){
+    // Built-in generated soundtrack has an actual step-based tempo.
+    skyBeat=Math.max(skyBeat*Math.exp(-dt*10),synthBeat*.45);
+    synthBeat*=Math.exp(-dt*10);
+  }else skyBeat=0;
+  sky.material.uniforms.pulse.value=Math.min(.55,skyBeat);
 }
 
 function audio(){if(AC)return;AC=new(window.AudioContext||webkitAudioContext)();const mst=AC.createGain();masterGain=mst;mst.gain.value=muted?0:.9;mst.connect(AC.destination);
+vehicleBus=AC.createGain();vehicleBus.gain.value=vehicleVolume;vehicleBus.connect(mst);
+effectsBus=AC.createGain();effectsBus.gain.value=effectsVolume;effectsBus.connect(mst);
+musicBus=AC.createGain();musicBus.gain.value=musicVolume/.85;musicBus.connect(mst);
 // MediaElementAudioSourceNode can be created only once per HTMLAudioElement.
 beatAnalyser=AC.createAnalyser();beatAnalyser.fftSize=1024;beatAnalyser.smoothingTimeConstant=.55;
 beatBins=new Uint8Array(beatAnalyser.frequencyBinCount);
-customMusicGain=AC.createGain();customMusicGain.gain.value=.68;
-const mediaSource=AC.createMediaElementSource(trackAudio);
-mediaSource.connect(beatAnalyser);beatAnalyser.connect(customMusicGain);customMusicGain.connect(mst);
+customMusicGain=AC.createGain();customMusicGain.gain.value=0;
+if(!DIRECT_FILE_AUDIO){
+  const mediaSource=AC.createMediaElementSource(trackAudio);
+  mediaSource.connect(beatAnalyser);beatAnalyser.connect(customMusicGain);customMusicGain.connect(musicBus);
+}else{
+  // The MP3 outputs directly to the system speakers. Keep Web Audio for engine,
+  // environment and generated fallback music. Audio analysis needs localhost.
+  console.info('ZENDRIVE: Local file mode — native MP3 playback with precomputed beat-reactive sky.');
+}
 const L=AC.sampleRate*3,ir=AC.createBuffer(2,L,AC.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<L;i++)d[i]=(Math.random()*2-1)*(1-i/L)**3}
-const cv=AC.createConvolver();cv.buffer=ir;const rg=AC.createGain();rg.gain.value=.7;cv.connect(rg);rg.connect(mst);mus=AC.createGain();mus.gain.value=.6;mus.connect(mst);mus.connect(cv);
+const cv=AC.createConvolver();cv.buffer=ir;const rg=AC.createGain();rg.gain.value=.7;cv.connect(rg);rg.connect(musicBus);mus=AC.createGain();mus.gain.value=.6;mus.connect(musicBus);mus.connect(cv);
 const nb=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
-const ns=(ty,f)=>{const s=AC.createBufferSource();s.buffer=nb;s.loop=true;const fl=AC.createBiquadFilter();fl.type=ty;fl.frequency.value=f;const g=AC.createGain();g.gain.value=0;s.connect(fl);fl.connect(g);g.connect(mst);s.start();return g};
-wind=ns('lowpass',380);rain=ns('highpass',3500);sq=ns('bandpass',1300);
+const ns=(ty,f,bus=effectsBus)=>{const s=AC.createBufferSource();s.buffer=nb;s.loop=true;const fl=AC.createBiquadFilter();fl.type=ty;fl.frequency.value=f;const g=AC.createGain();g.gain.value=0;s.connect(fl);fl.connect(g);g.connect(bus);s.start();return g};
+wind=ns('lowpass',380);rain=ns('highpass',3500);sq=ns('bandpass',1300,vehicleBus);
 // Soft, continuous, speed/slip-controlled tyre squeal. Shares the existing noise buffer.
 const tyreSquealSource=AC.createBufferSource();
 tyreSquealSource.buffer=nb;tyreSquealSource.loop=true;
@@ -1364,13 +1664,13 @@ tyreSquealFilter.type='bandpass';tyreSquealFilter.frequency.value=1600;tyreSquea
 tyreSquealGain=AC.createGain();tyreSquealGain.gain.value=0;
 tyreSquealSource.connect(tyreSquealFilter);
 tyreSquealFilter.connect(tyreSquealGain);
-tyreSquealGain.connect(mst);
+tyreSquealGain.connect(vehicleBus);
 tyreSquealSource.start();
-refu=ns('bandpass',650);crashfx=v=>{const n=AC.currentTime,V=.35+v*.65,g0=(d,a)=>{const g=AC.createGain();g.gain.setValueAtTime(a,n);g.gain.exponentialRampToValueAtTime(.001,n+d);g.connect(mst);return g},nz=(f,q,d,a,ty)=>{const s=AC.createBufferSource(),fl=AC.createBiquadFilter();s.buffer=nb;fl.type=ty;fl.frequency.value=f;fl.Q.value=q;s.connect(fl);fl.connect(g0(d,a*V));s.start(n);s.stop(n+d+.05)},tn=(f0,f1,d,a,ty)=>{const o=AC.createOscillator();o.type=ty;o.frequency.setValueAtTime(f0,n);o.frequency.exponentialRampToValueAtTime(f1,n+d);o.connect(g0(d,a*V));o.start(n);o.stop(n+d+.05)};
+refu=ns('bandpass',650);crashfx=v=>{const n=AC.currentTime,V=.35+v*.65,g0=(d,a)=>{const g=AC.createGain();g.gain.setValueAtTime(a,n);g.gain.exponentialRampToValueAtTime(.001,n+d);g.connect(effectsBus);return g},nz=(f,q,d,a,ty)=>{const s=AC.createBufferSource(),fl=AC.createBiquadFilter();s.buffer=nb;fl.type=ty;fl.frequency.value=f;fl.Q.value=q;s.connect(fl);fl.connect(g0(d,a*V));s.start(n);s.stop(n+d+.05)},tn=(f0,f1,d,a,ty)=>{const o=AC.createOscillator();o.type=ty;o.frequency.setValueAtTime(f0,n);o.frequency.exponentialRampToValueAtTime(f1,n+d);o.connect(g0(d,a*V));o.start(n);o.stop(n+d+.05)};
 tn(110,32,.5,.9,'sine');tn(240,60,.28,.5,'triangle');nz(1400,.8,.22,.9,'bandpass');nz(300,.5,.7,.7,'lowpass');nz(5200,2,.35,.3,'highpass');nz(900,3,.55,.25,'bandpass');
-for(let i=0;i<7;i++){const o=AC.createOscillator(),g=AC.createGain(),t=n+.05+Math.random()*.35;o.type='sine';o.frequency.value=2500+Math.random()*3500;g.gain.setValueAtTime(.12*V,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);o.connect(g);g.connect(mst);o.start(t);o.stop(t+.15)}};sfx=k=>{const n=AC.currentTime,env=(g,v,d)=>{g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d)},nz=(f,v,d,ty)=>{const s=AC.createBufferSource(),g=AC.createGain(),fl=AC.createBiquadFilter();s.buffer=nb;fl.type=ty;fl.frequency.value=f;env(g,v,d);s.connect(fl);fl.connect(g);g.connect(mst);s.start();s.stop(n+d+.05)},tn=(f,v,d,ty)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.setValueAtTime(f,n);o.frequency.exponentialRampToValueAtTime(f*.5,n+d);env(g,v,d);o.connect(g);g.connect(mst);o.start();o.stop(n+d+.05)};if(k=='bench'){nz(2200,.5,.18,'bandpass');tn(160,.5,.2,'triangle')}else if(k=='sign'){tn(300,.35,.35,'sawtooth');tn(620,.2,.25,'square');nz(3000,.35,.4,'bandpass');nz(6000,.2,.5,'highpass')}else if(k=='snow'){nz(500,.55,.35,'lowpass');tn(90,.4,.3,'sine')}else if(k=='ding'){tn(1568,.2,.6,'sine');tn(2093,.12,.5,'sine')}};bang=()=>{const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter(),n=AC.currentTime;s.buffer=nb;f.type='lowpass';f.frequency.value=1100;g.gain.setValueAtTime(.6,n);g.gain.exponentialRampToValueAtTime(.001,n+.22);s.connect(f);f.connect(g);g.connect(mst);s.start();s.stop(n+.3)};eng=AC.createOscillator();eng.type='sawtooth';engFilter=AC.createBiquadFilter();engFilter.type='lowpass';engFilter.frequency.value=260;eg=AC.createGain();eg.gain.value=0;eng.connect(engFilter);engFilter.connect(eg);eg.connect(mst);eng.start();
+for(let i=0;i<7;i++){const o=AC.createOscillator(),g=AC.createGain(),t=n+.05+Math.random()*.35;o.type='sine';o.frequency.value=2500+Math.random()*3500;g.gain.setValueAtTime(.12*V,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);o.connect(g);g.connect(effectsBus);o.start(t);o.stop(t+.15)}};sfx=k=>{const n=AC.currentTime,env=(g,v,d)=>{g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d)},nz=(f,v,d,ty)=>{const s=AC.createBufferSource(),g=AC.createGain(),fl=AC.createBiquadFilter();s.buffer=nb;fl.type=ty;fl.frequency.value=f;env(g,v,d);s.connect(fl);fl.connect(g);g.connect(effectsBus);s.start();s.stop(n+d+.05)},tn=(f,v,d,ty)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.setValueAtTime(f,n);o.frequency.exponentialRampToValueAtTime(f*.5,n+d);env(g,v,d);o.connect(g);g.connect(effectsBus);o.start();o.stop(n+d+.05)};if(k=='bench'){nz(2200,.5,.18,'bandpass');tn(160,.5,.2,'triangle')}else if(k=='sign'){tn(300,.35,.35,'sawtooth');tn(620,.2,.25,'square');nz(3000,.35,.4,'bandpass');nz(6000,.2,.5,'highpass')}else if(k=='snow'){nz(500,.55,.35,'lowpass');tn(90,.4,.3,'sine')}else if(k=='ding'){tn(1568,.2,.6,'sine');tn(2093,.12,.5,'sine')}};bang=()=>{const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter(),n=AC.currentTime;s.buffer=nb;f.type='lowpass';f.frequency.value=1100;g.gain.setValueAtTime(.6,n);g.gain.exponentialRampToValueAtTime(.001,n+.22);s.connect(f);f.connect(g);g.connect(effectsBus);s.start();s.stop(n+.3)};eng=AC.createOscillator();eng.type='sawtooth';engFilter=AC.createBiquadFilter();engFilter.type='lowpass';engFilter.frequency.value=260;eg=AC.createGain();eg.gain.value=0;eng.connect(engFilter);engFilter.connect(eg);eg.connect(vehicleBus);eng.start();
 // Gentle triangle reinforcement adds body to the classic car engine without replacing its original tone.
-engWarm=AC.createOscillator();engWarm.type='triangle';const warmFilter=AC.createBiquadFilter();warmFilter.type='lowpass';warmFilter.frequency.value=150;egWarm=AC.createGain();egWarm.gain.value=0;engWarm.connect(warmFilter);warmFilter.connect(egWarm);egWarm.connect(mst);engWarm.start()}
+engWarm=AC.createOscillator();engWarm.type='triangle';const warmFilter=AC.createBiquadFilter();warmFilter.type='lowpass';warmFilter.frequency.value=150;egWarm=AC.createGain();egWarm.gain.value=0;engWarm.connect(warmFilter);warmFilter.connect(egWarm);egWarm.connect(vehicleBus);engWarm.start();applyAudioLevels()}
 function tone(m,t,d,ty,v,cut,at){const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();o.type=ty;o.frequency.value=mf(m);f.type='lowpass';f.frequency.value=cut;
 g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+at);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(f);f.connect(g);g.connect(mus);o.start(t);o.stop(t+d+.1)}
 function sched(){clearTimeout(tmr);if(!AC||customTrackActive)return;const s=SONGS[cur],spb=60/s.b;if(playing&&!paused){const t=AC.currentTime+.05,pr=s.mi?[[0,1],[-4,0],[3,0],[-2,0]]:[[0,0],[-3,1],[-7,0],[-5,0]],sc=s.mi?[0,3,5,7,10]:[0,2,4,7,9];
@@ -1381,10 +1681,10 @@ tmr=setTimeout(sched,spb*1000)}
 // UI
 const art=$('art'),PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',PAUSE='<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
 function ui(){const s=SONGS[cur],title=customTrackActive?audioTitle(activeTrack):s.n,subtitle=customTrackActive?(activeTrack.artist?activeTrack.artist+' · '+s.n:s.n+' · '+s.m):s.m+' · ZENDRIVE Radio';art.style.background=`linear-gradient(160deg,${s.top},${s.bot})`;art.textContent=s.e;$('ttl').textContent=title;$('sub').textContent=subtitle;$('pp').innerHTML=playing?PAUSE:PLAY;$('mart').style.background='linear-gradient(160deg,'+s.top+','+s.bot+')';$('mart').textContent=s.e;$('mtt').textContent=title;$('msb').textContent=subtitle;$('mpp').innerHTML=playing?PAUSE:PLAY;document.querySelector('.ck').textContent=PL.includes(cur)?'✓':'+';
-[...$('list').children].forEach((r,i)=>r.classList.toggle('on',i==cur))}
-$('list').innerHTML=SONGS.map((s,i)=>`<div class="row"><b style="background:linear-gradient(160deg,${s.top},${s.bot})">${s.e}</b><span>${s.n}<small>${s.m}</small></span></div>`).join('');
-[...$('list').children].forEach((r,i)=>r.onclick=()=>pick(i));
-function pick(i,q){Q=q||[];cur=(i+SONGS.length)%SONGS.length;songT=0;beat=0;playing=true;setTg();clearTimeout(bt);pend=SONGS[cur];trv=0;if(AC)chooseClimateTrack(cur);else ui()}
+[...$('list').children].forEach(r=>r.classList.toggle('on',+r.dataset.i===cur))}
+$('list').innerHTML=CLIMATE_PLAY_ORDER.map(i=>{const s=SONGS[i];return `<div class="row" data-i="${i}"><b style="background:linear-gradient(160deg,${s.top},${s.bot})">${s.e}</b><span>${s.n}<small>${s.m}</small></span></div>`}).join('');
+[...$('list').children].forEach(r=>r.onclick=()=>pick(+r.dataset.i));
+function pick(i,q,pinSeason=true){Q=q||[];seasonPinned=pinSeason;cur=(i+SONGS.length)%SONGS.length;songT=0;beat=0;playing=true;setTg();clearTimeout(bt);pend=SONGS[cur];trv=0;if(AC)requestClimateTrack(cur);else ui()}
 $('next').onclick=()=>qn(1);$('prev').onclick=()=>qn(-1);
 $('pp').onclick=()=>{playing=!playing;if(customTrackActive){if(playing)resumeCustomAudio();else trackAudio.pause()}else if(AC){mus.gain.setTargetAtTime(playing?.6:0,AC.currentTime,.4);if(playing)sched()}ui()};
 const tv=()=>{veh=veh=='car'?'bike':'car';$('bv').textContent=veh=='car'?'🚗 Car':'🏍 Bike';Object.values(VS).forEach(v=>v.o.visible=false)},tc=()=>{pov=!pov;if(!pov)cam.position.set(1e5,1e5,1e5)};
@@ -1396,18 +1696,30 @@ const hideControls=()=>{controlsPanel.classList.remove('on');};
 $('start-controls').onclick=showControls;
 $('pause-controls').onclick=showControls;
 $('close-controls').onclick=hideControls;
-$('sound-toggle').onclick=()=>{muted=!muted;$('sound-status').textContent=muted?'OFF':'ON';$('sound-toggle').setAttribute('aria-pressed',String(!muted));if(AC&&masterGain)masterGain.gain.setTargetAtTime(muted?0:.9,AC.currentTime,.12)};
+$('sound-toggle').onclick=()=>{muted=!muted;$('sound-status').textContent=muted?'OFF':'ON';$('sound-toggle').setAttribute('aria-pressed',String(!muted));applyAudioLevels()};
+function bindVolumeSlider(id,key,setter,initial){
+  const input=$(id),readout=$(id+'-value');
+  input.value=String(Math.round(initial*100));readout.textContent=input.value+'%';
+  input.addEventListener('input',()=>{
+    const value=Number(input.value)/100;setter(value);readout.textContent=input.value+'%';
+    try{localStorage.setItem(key,String(value))}catch(_){}
+    applyAudioLevels();
+  });
+}
+bindVolumeSlider('vehicle-volume','zendrive_vehicle_volume_v2',v=>vehicleVolume=v,vehicleVolume);
+bindVolumeSlider('music-volume','zendrive_music_volume_v2',v=>musicVolume=v,musicVolume);
+bindVolumeSlider('effects-volume','zendrive_effects_volume_v2',v=>effectsVolume=v,effectsVolume);
 $('sound-toggle').setAttribute('aria-pressed','true');
 let phHov=0,phAct=performance.now();const ph2=$('phone');ph2.addEventListener('pointerdown',()=>{if(gameStarted&&!ph2.classList.contains('closed')){phoneUsed=true;$('phone-reminder').classList.remove('on')}});ph2.addEventListener('pointerenter',()=>phHov=1);ph2.addEventListener('pointerleave',()=>{phHov=0;phAct=performance.now()});['pointermove','pointerdown','wheel','keydown','input'].forEach(e=>ph2.addEventListener(e,()=>phAct=performance.now()));
 const MD=[...new Set(SONGS.map(s=>s.m))],qe=$('q');let mood='';$('mc').innerHTML=MD.map(m=>`<span>${m}</span>`).join('');
-const rr=i=>`<div class='row rs' data-i='${i}'><b style='background:linear-gradient(160deg,${SONGS[i].top},${SONGS[i].bot})'>${SONGS[i].e}</b><span>${SONGS[i].n}<small>${SONGS[i].m} · ${SONGS[i].b} BPM</small></span></div>`,ids=f=>SONGS.map((s,i)=>i).filter(f);
+const rr=i=>`<div class='row rs' data-i='${i}'><b style='background:linear-gradient(160deg,${SONGS[i].top},${SONGS[i].bot})'>${SONGS[i].e}</b><span>${SONGS[i].n}<small>${SONGS[i].m} · ${SONGS[i].b} BPM</small></span></div>`,ids=f=>CLIMATE_PLAY_ORDER.filter(f);
 function renderRes(){const t=qe.value.toLowerCase(),L=ids(i=>(!mood||SONGS[i].m==mood)&&(!t||(SONGS[i].n+' '+SONGS[i].m).toLowerCase().includes(t)));$('res').innerHTML=L.map(rr).join('')||'<p>No matches</p>';[...$('res').children].forEach(r=>r.onclick=()=>pick(+r.dataset.i,L));[...$('mc').children].forEach(c=>c.classList.toggle('on',c.textContent==mood))}
 function renderLib(){$('lib').innerHTML=PL.length?`<h3>My Playlist · ${PL.length}</h3>`+PL.map(rr).join(''):'<p>Tap + on Now Playing to add songs to your playlist.</p>';[...$('lib').querySelectorAll('.row')].forEach(r=>r.onclick=()=>pick(+r.dataset.i,[...PL]))}
 qe.oninput=renderRes;[...$('mc').children].forEach(c=>c.onclick=()=>{mood=mood==c.textContent?'':c.textContent;renderRes();if(mood)pick(SONGS.findIndex(s=>s.m==mood),ids(i=>SONGS[i].m==mood))});
 [...$('nav').children].forEach((t,i,a)=>t.onclick=()=>{$('hm').dataset.v=i;a.forEach((x,j)=>x.classList.toggle('on',j==i));renderRes();renderLib()});
 document.querySelector('.ck').onclick=()=>{const i=PL.indexOf(cur);i<0?PL.push(cur):PL.splice(i,1);ui();renderLib()};renderRes();renderLib();$('chev').onclick=()=>$('app').classList.remove('np');$('mini').onclick=e=>{if(!e.target.closest('button'))$('app').classList.add('np')};$('mpp').onclick=()=>$('pp').onclick();
 for(let i=0;i<9;i++){const s=document.createElement('i');s.className='sl';s.style.transform='translateZ('+(i-4)*1.7+'px)';$('body3').prepend(s)}
-$('shelf').innerHTML=SONGS.map((s,i)=>`<div><b style='background:linear-gradient(160deg,${s.top},${s.bot})'>${s.e}</b>${s.n}<br>${s.m}</div>`).join('');[...$('shelf').children].forEach((d,i)=>d.onclick=()=>pick(i));$('bz').onclick=tz;ui();
+$('shelf').innerHTML=CLIMATE_PLAY_ORDER.map(i=>{const s=SONGS[i];return `<div><b style='background:linear-gradient(160deg,${s.top},${s.bot})'>${s.e}</b>${s.n}<br>${s.m}</div>`}).join('');[...$('shelf').children].forEach((d,j)=>d.onclick=()=>pick(CLIMATE_PLAY_ORDER[j]));$('bz').onclick=tz;ui();
 const ph=$('phone');ph.addEventListener('pointermove',e=>{const r=ph.getBoundingClientRect();ph.style.setProperty('--ry',-14+((e.clientX-r.left)/r.width-.5)*18+'deg');ph.style.setProperty('--rx',6-((e.clientY-r.top)/r.height-.5)*12+'deg')});ph.addEventListener('pointerleave',()=>{ph.style.setProperty('--ry','-14deg');ph.style.setProperty('--rx','6deg')});
 let bry=-26,brx=8,dr=0;ph.addEventListener('pointerdown',e=>{if(!e.target.closest('button,.row,#shelf,#nav,#mini,#chev'))dr=[e.clientX,e.clientY]});addEventListener('pointerup',()=>dr=0);
 ph.addEventListener('pointermove',e=>{if(dr){bry+=(e.clientX-dr[0])*.5;brx=Math.max(-50,Math.min(50,brx-(e.clientY-dr[1])*.3));dr=[e.clientX,e.clientY]}const r=ph.getBoundingClientRect();ph.style.setProperty('--ry',bry+((e.clientX-r.left)/r.width-.5)*10+'deg');ph.style.setProperty('--rx',brx-((e.clientY-r.top)/r.height-.5)*8+'deg')});
@@ -1454,7 +1766,7 @@ if(k.length===1&&/^[a-z]$/.test(k)&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&
 }
 if(k==='Shift'&&!boostHintDismissed){boostHintDismissed=true;$('hintmsg').classList.remove('on')}
 if(k==='Shift'&&!keys[k])attemptBoostWarning();
-if(!keys[k]){if(k=='c')tc();if(k=='v')tv();if(k=='p')tp();if(k=='z')tz();if(k=='n')qn(1);if(k=='r')ret();if(k=='q')auto=auto?0:1}keys[k]=1});
+if(!keys[k]){if(k=='c')tc();if(k=='v')tv();if(k=='p')tp();if(k=='z')tz();if(k=='n'&&!cheatBuffer.endsWith('chickmagn'))nextSeason();if(k=='r')ret();if(k=='q')auto=auto?0:1}keys[k]=1});
 addEventListener('keyup',e=>keys[e.key.length==1?e.key.toLowerCase():e.key]=0);
 addEventListener('pointerdown',e=>{
   if(!e.target.closest('#phone,#mp,#pause,#controls-panel,#start'))$('phone').classList.add('closed');
@@ -1484,7 +1796,28 @@ addEventListener('pointercancel',endDrivePointer);
 addEventListener('blur',()=>{cancelDrivePointer();keys.Shift=0;P.bo=0});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelDrivePointer()});
 addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
-$('play').onclick=()=>{if(gameStarted)return;gameStarted=true;audio();AC.resume();chooseClimateTrack(cur);$('start').style.display='none';$('phone').classList.add('closed')};
+$('play').onclick=()=>{
+  if(gameStarted)return;
+  // Must be requested synchronously during the PLAY click (browser user activation).
+  if(!document.fullscreenElement){
+    const root=document.documentElement;
+    try{
+      const promise=root.requestFullscreen?root.requestFullscreen():root.webkitRequestFullscreen?.();
+      if(promise?.catch)promise.catch(()=>console.info('Fullscreen not available in this browser.'));
+    }catch(err){console.info('Fullscreen not available:',err)}
+  }
+  // Make the transition cover the home screen BEFORE revealing the game.
+  // Audio/game setup is started during the user click to satisfy browser policies.
+  const curtain=$('play-transition');
+  curtain.classList.add('active');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>curtain.classList.add('to-black')));
+  gameStarted=true;audio();AC.resume();chooseClimateTrack(cur);
+  setTimeout(()=>{
+    $('start').style.display='none';$('phone').classList.add('closed');
+    curtain.classList.remove('to-black');
+  },750);
+  setTimeout(()=>{curtain.classList.remove('active')},1500);
+};
 // cockpit: drawn in camera space during POV, wheel/bars turn with steering, hands follow
 const CK=new T.Group(),CC=new T.Group(),CB=new T.Group(),mt=c=>new T.MeshLambertMaterial({color:c,flatShading:true}),
 bx=(g,w,h,d,c,x,y,z,rz)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),mt(c));m.position.set(x,y,z);m.rotation.z=rz||0;g.add(m);return m};
@@ -1524,6 +1857,7 @@ const clk=new T.Clock,tmp=new T.Vector3,cl=(a,m)=>Math.max(-m,Math.min(m,a));
 let weatherElapsed=0,lastMiniUpdate=-Infinity;
 function frame(){requestAnimationFrame(frame);const elapsedFrame=clk.getDelta(),dt=(paused||!gameStarted)?0:Math.min(elapsedFrame,.05),now=clk.elapsedTime,k=1-Math.exp(-dt*.04),s=SONGS[cur],sp=VS[veh];
 adaptResolution(elapsedFrame);
+advanceMusicFades(Math.min(elapsedFrame,.05));
 $('boost-fuel-warning').classList.toggle('on',gameStarted&&!paused&&performance.now()<boostFuelWarningEnd);
 if(gameStarted&&!paused){
   gameplaySeconds+=Math.min(elapsedFrame,.25);
@@ -1551,7 +1885,7 @@ if(nextRoadIndex!==ri){ri=nextRoadIndex;rz0=1}
 {const a=PT[ri],rl=(P.x-PX[ri])*Math.cos(a)-(P.z-PZ[ri])*Math.sin(a)+RW*scAt(ri)+1.3;if(RL(ri)&&!bo(ri)&&Math.abs(rl)<.7){const d=Math.sign(rl)*(.7-Math.abs(rl));P.x+=Math.cos(a)*d;P.z-=Math.sin(a)*d;P.v*=.98}}// Only nearby grid cells can collide; no scans across all visible trees.
 for(const t of ob)collideItem(t,false);
 collideNearbyBins(treeColliders,1,true);
-collideNearbyBins(buildingColliders,2,false);
+if(BLD.visible)collideNearbyBins(buildingColliders,2,false);
 const f=1.6,sx=-Math.sin(P.h),sz=-Math.cos(P.h),rx=Math.cos(P.h),rz=-Math.sin(P.h),y=HP(P.x,P.z),ka=Math.min(1,dt*6);
 P.pitch+=(Math.atan2(HP(P.x+sx*f,P.z+sz*f)-HP(P.x-sx*f,P.z-sz*f),2*f)-P.pitch)*ka;P.roll+=(Math.atan2(HP(P.x+rx,P.z+rz)-HP(P.x-rx,P.z-rz),2)-P.roll)*ka;
 // suspension: spring-dampers for heave, pitch (squat/dive) and roll (cornering), fed by bumps, accel and lateral g
@@ -1592,7 +1926,7 @@ const tyreIntensity=Math.min(1,slide+handbrakeSlide)*tyreSpeed*(isCar?1:.6);
 sq.gain.setTargetAtTime(.025*tyreIntensity,t,tyreIntensity>.02?.10:.22);
 tyreSquealGain.gain.setTargetAtTime(.013*tyreIntensity,t,tyreIntensity>.02?.12:.26);
 tyreSquealFilter.frequency.setTargetAtTime(1150+850*sv+Math.min(330,P.sl*420),t,.18)}
-if(playing){if(customTrackActive){songT=Number.isFinite(trackAudio.currentTime)?trackAudio.currentTime:0}else{songT+=dt;if(songT>180)qn(1)}}late(dt,now);$('prog').style.width=Math.min(100,songT/musicDuration()*100)+'%';$('tcur').textContent=showTime(songT);document.querySelector('.tm span:last-child').textContent=showTime(musicDuration());$('spd').textContent=Math.round(Math.abs(P.v)*3.6)+' km/h'
+if(playing){if(customTrackActive){songT=Number.isFinite(trackAudio.currentTime)?trackAudio.currentTime:0}else{songT+=dt;if(songT>180){if(seasonPinned){songT=0;beat=0}else nextSeason()}}}late(dt,now);$('prog').style.width=Math.min(100,songT/musicDuration()*100)+'%';$('tcur').textContent=showTime(songT);document.querySelector('.tm span:last-child').textContent=showTime(musicDuration());$('spd').textContent=Math.round(Math.abs(P.v)*3.6)+' km/h'
 ;render()}
 frame();
 } else {
@@ -1614,4 +1948,8 @@ frame();
     if(event.key === 'Escape') controls.classList.remove('on');
   });
 }
-</script></body></html>
+</script>
+<script>if(!window.THREE){
+  const el=document.getElementById('music-error-toast');
+  if(el){el.textContent='Unable to load the 3D engine. Connect to the internet and refresh the page.';el.classList.add('on');el.style.opacity='1';}
+}</script></body></html>
