@@ -194,6 +194,57 @@ body.hide-shortcuts #mp .key-tip{opacity:0}body.hide-shortcuts #mp .phone-tip,bo
 /* Audio status only appears if an MP3 fails to load or playback is blocked. */
 #music-error-toast{position:fixed;z-index:24;left:50%;bottom:25%;transform:translate(-50%,10px);max-width:min(550px,90vw);background:#0b1220e8;border:1px solid #ffffff55;border-radius:9px;box-shadow:0 8px 30px #0009;padding:12px 17px;color:#fff;font-size:12px;line-height:1.5;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
 #music-error-toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* Road trip dashboard: analog speedometer, smaller original fuel dial, and trip odometer. */
+#drive-instruments{position:fixed;left:clamp(12px,2vw,28px);bottom:calc(15px + env(safe-area-inset-bottom,0px));z-index:8;display:flex;flex-direction:column;align-items:flex-start;gap:8px;pointer-events:none;filter:drop-shadow(0 4px 15px rgba(0,0,0,.5));font-family:system-ui,Arial,sans-serif}
+#trip-readout{display:flex;align-items:baseline;gap:14px;padding:6px 14px 6px 12px;border-radius:10px;background:rgba(7,12,22,.68);border:1px solid rgba(205,222,255,.21);box-shadow:inset 0 0 16px rgba(130,190,255,.08);font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(200,221,255,.3)}
+#trip-readout>span{font-size:10px;letter-spacing:.17em;color:#b8cbe1;font-weight:600}
+#trip-readout strong{font-weight:650;font-size:22px;letter-spacing:.055em;color:#f5f8fc}
+#trip-readout small{font-size:11px;font-weight:500;color:#cbd9e6}
+#instrument-dials{display:flex;align-items:flex-end;gap:10px}
+#speedometer{width:clamp(166px,16vw,202px);height:clamp(166px,16vw,202px);flex:none;filter:drop-shadow(0 0 8px rgba(218,238,255,.52))}
+#speedometer svg{width:100%;height:100%;display:block;overflow:visible}
+/* Override the legacy fixed-position fuel dial; the existing needle, night theme and cheat FX remain intact. */
+#drive-instruments #fuel{position:relative;left:auto;bottom:auto;flex:none;width:clamp(136px,12.5vw,160px);height:clamp(136px,12.5vw,160px);margin-bottom:2px}
+#drive-instruments #fuel svg{width:100%;height:100%}
+@media (max-width:700px), (pointer:coarse) and (max-height:550px){
+  #drive-instruments{left:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));gap:5px}
+  #speedometer{display:none}
+  #trip-readout{gap:9px;padding:5px 9px;border-radius:8px}
+  #trip-readout>span{font-size:9px;letter-spacing:.10em}
+  #trip-readout strong{font-size:16px}
+  #trip-readout small{font-size:9px}
+  #drive-instruments #fuel{width:clamp(128px,34vw,146px);height:clamp(128px,34vw,146px)}
+}
+@media (max-width:360px){#trip-readout{gap:6px}#trip-readout>span{font-size:8px}}
+
+/* Clean odometer text, dashboard depth, and matched charcoal instrument faces. */
+#trip-readout{display:block;padding:0 0 1px 8px;border:0;border-radius:0;background:none;box-shadow:none;line-height:1;text-shadow:0 1px 5px #000,0 0 10px #d2e7ff88}
+#trip-readout strong{font-size:24px;font-weight:650;letter-spacing:.04em;color:#f7fbff}
+#trip-readout small{font-size:12px;color:#cbd9e6}
+#instrument-dials{gap:0;align-items:flex-end;isolation:isolate}
+#speedometer{position:relative;z-index:2}
+#drive-instruments #fuel{z-index:1;margin-left:-17px;filter:drop-shadow(0 0 8px rgba(218,238,255,.38))}
+#drive-instruments #fuel svg{filter:none}
+#fuel svg>circle:first-of-type{fill:#141920;stroke:#cdd5dc}
+#fuel svg>circle:nth-of-type(2){fill:url(#fuel-face);stroke:#5f7180}
+#fuel.night svg>circle:first-of-type{fill:#141920;stroke:#cdd5dc}
+#fuel.night svg>circle:nth-of-type(2){fill:url(#fuel-face);stroke:#5f7180}
+#fuel.night svg>circle:nth-of-type(3){fill:none;stroke:#e5edfa}
+#fuel.night #nd line,#fuel #nd line{stroke:#ff735a;filter:drop-shadow(0 0 2px #ff735a88)}
+#fuel.night #nd circle,#fuel #nd circle{fill:#cbd4de;stroke:#4f5a69}
+#fuel.night svg text,#fuel svg text{fill:#eff5fa;text-shadow:none}
+#fuel.night #tk,#fuel #tk{stroke:#f3f4f2;filter:none}
+@media (max-width:700px), (pointer:coarse) and (max-height:550px){
+ #trip-readout{padding:0 0 2px 6px}
+ #trip-readout strong{font-size:19px}
+ #drive-instruments #fuel{margin-left:0}
+}
+/* Centre the bare odometer over the speedometer, with no backing panel. */
+#trip-readout{width:clamp(166px,16vw,202px);padding:0;text-align:center;align-self:flex-start}
+@media (max-width:700px), (pointer:coarse) and (max-height:550px){
+ #trip-readout{width:clamp(128px,34vw,146px);padding:0;text-align:center}
+}
 </style></head><body>
 <div id="music-error-toast" role="status" aria-live="polite"></div>
 <div id="pause" class="menu-layer" role="dialog" aria-modal="true" aria-label="Game paused">
@@ -241,7 +292,30 @@ body.hide-shortcuts #mp .key-tip{opacity:0}body.hide-shortcuts #mp .phone-tip,bo
     <button id="close-controls" class="menu-button primary close-controls" type="button">BACK</button>
   </div>
 </div>
-<canvas id="fx"></canvas><canvas id="mm" width="300" height="180"></canvas><div id="warn"></div><div id="grn"></div><div id="hintmsg">Press SHIFT to boost</div><div id="phone-reminder" role="status" aria-live="polite">Press <kbd>P</kbd> to pull out your phone</div><div id="cheat-toast" role="status" aria-live="polite">CHEAT ACTIVATED <small>INFINITE BOOST</small></div><div id="boost-fuel-warning" role="status" aria-live="polite"><strong>LOW FUEL</strong><small>BOOST UNAVAILABLE · FIND A GAS STATION</small></div><div id="ad">Autodrive on</div><div id="oof">Out of fuel<button id="oofb">Reset</button></div><div id="rr">Off the road · press R to return</div><div id="mp"><div class="mini-cover"><span class="key-tip phone-tip" aria-hidden="true">(P)</span><div id="mpt"></div></div><div><b id="mpn"></b><i><u id="mpb"></u></i></div><button id="mv0" aria-label="Previous song">⏮</button><button id="mv1" aria-label="Next song">⏭</button><div id="mpv"><s></s><s></s><s></s></div></div><div id="fuel"><b><i id="fi"></i></b><em id="fm"></em><svg viewBox="-50 -50 100 100"><circle r="47" fill="#f3ead8" stroke="#6b4426" stroke-width="6"/><g stroke="#111" stroke-width="1.8"><line y1="-40" y2="-34" transform="rotate(-120)"/><line y1="-40" y2="-34" transform="rotate(-90)"/><line y1="-40" y2="-34" transform="rotate(-60)"/><line y1="-40" y2="-34" transform="rotate(-30)"/><line y1="-40" y2="-34"/><line y1="-40" y2="-34" transform="rotate(30)"/><line y1="-40" y2="-34" transform="rotate(60)"/><line y1="-40" y2="-34" transform="rotate(90)"/><line y1="-40" y2="-34" transform="rotate(120)"/></g><text x="-27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">E</text><text x="27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">F</text><g id="nd"><line y2="-33" stroke="#7a2a14" stroke-width="2.4"/></g><circle r="4.5" fill="#6b4426"/></svg></div><div id="hint">W/S throttle · A/D steer · Space drift · Shift boost · touch to drive<br>C camera · V vehicle · Z cruise · P phone · N next climate · <span id="spd">0 km/h</span></div>
+<canvas id="fx"></canvas><canvas id="mm" width="300" height="180"></canvas><div id="warn"></div><div id="grn"></div><div id="hintmsg">Press SHIFT to boost</div><div id="phone-reminder" role="status" aria-live="polite">Press <kbd>P</kbd> to pull out your phone</div><div id="cheat-toast" role="status" aria-live="polite">CHEAT ACTIVATED <small>INFINITE BOOST</small></div><div id="boost-fuel-warning" role="status" aria-live="polite"><strong>LOW FUEL</strong><small>BOOST UNAVAILABLE · FIND A GAS STATION</small></div><div id="ad">Autodrive on</div><div id="oof">Out of fuel<button id="oofb">Reset</button></div><div id="rr">Off the road · press R to return</div><div id="mp"><div class="mini-cover"><span class="key-tip phone-tip" aria-hidden="true">(P)</span><div id="mpt"></div></div><div><b id="mpn"></b><i><u id="mpb"></u></i></div><button id="mv0" aria-label="Previous song">⏮</button><button id="mv1" aria-label="Next song">⏭</button><div id="mpv"><s></s><s></s><s></s></div></div><div id="drive-instruments" aria-label="Driving instruments">
+  <div id="trip-readout" role="status" aria-live="off"><strong><span id="trip-km">0.0</span> <small>KM</small></strong></div>
+  <div id="instrument-dials">
+    <div id="speedometer" aria-label="Speedometer"><svg viewBox="-100 -100 200 200" role="img" aria-label="Vehicle speed in kilometres per hour">
+  <defs>
+    <radialGradient id="speed-face" cx="46%" cy="38%" r="68%"><stop offset="0%" stop-color="#2d3645"/><stop offset="78%" stop-color="#111924"/><stop offset="100%" stop-color="#070b13"/></radialGradient>
+  </defs>
+  <circle r="95" fill="#141920" stroke="#cdd5dc" stroke-width="3.5"/>
+  <circle r="89" fill="url(#speed-face)" stroke="#5f7180" stroke-width="1.2"/>
+  <circle r="81" fill="none" stroke="#e5edfa" stroke-opacity=".12" stroke-width="1"/>
+  <g stroke="#f3f4f2" stroke-linecap="round"><line x1="0" y1="-76" x2="0" y2="-64" transform="rotate(-120.00)" stroke-width="2.3"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(-108.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-69" transform="rotate(-96.00)" stroke-width="1.4"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(-84.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-64" transform="rotate(-72.00)" stroke-width="2.3"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(-60.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-69" transform="rotate(-48.00)" stroke-width="1.4"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(-36.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-64" transform="rotate(-24.00)" stroke-width="2.3"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(-12.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-69" transform="rotate(0.00)" stroke-width="1.4"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(12.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-64" transform="rotate(24.00)" stroke-width="2.3"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(36.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-69" transform="rotate(48.00)" stroke-width="1.4"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(60.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-64" transform="rotate(72.00)" stroke-width="2.3"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(84.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-69" transform="rotate(96.00)" stroke-width="1.4"/><line x1="0" y1="-76" x2="0" y2="-72" transform="rotate(108.00)" stroke-width="0.8"/><line x1="0" y1="-76" x2="0" y2="-64" transform="rotate(120.00)" stroke-width="2.3"/></g>
+  <g font-family="system-ui,Arial,sans-serif" font-size="9" font-weight="600" fill="#eff5fa"><text x="-45.90" y="30.50" text-anchor="middle">0</text><text x="-50.41" y="-12.38" text-anchor="middle">40</text><text x="-21.56" y="-44.42" text-anchor="middle">80</text><text x="21.56" y="-44.42" text-anchor="middle">120</text><text x="50.41" y="-12.38" text-anchor="middle">160</text><text x="45.90" y="30.50" text-anchor="middle">200</text></g>
+  <text x="0" y="-27" text-anchor="middle" fill="#9daec4" font-family="system-ui,Arial,sans-serif" font-size="8.4" letter-spacing="2.6">SPEED</text>
+  <text id="speed-number" x="0" y="32" text-anchor="middle" fill="#ffffff" font-family="system-ui,Arial,sans-serif" font-size="29" font-weight="650">0</text>
+  <text x="0" y="47" text-anchor="middle" fill="#aabbd0" font-family="system-ui,Arial,sans-serif" font-size="9" letter-spacing="1.2">KM/H</text>
+  <g id="speed-needle" transform="rotate(-120)">
+    <path d="M-2.7 10 L-1.5 -73 Q0 -78 1.5 -73 L2.7 10 Z" fill="#ff735a"/>
+    <path d="M0 -73 L0 -10" stroke="#ffc6ad" stroke-width=".9"/>
+  </g>
+  <circle r="6.2" fill="#cbd4de" stroke="#4f5a69" stroke-width="2.5"/>
+</svg></div>
+    <div id="fuel"><b><i id="fi"></i></b><em id="fm"></em><svg viewBox="-50 -50 100 100"><circle r="47" fill="#f3ead8" stroke="#6b4426" stroke-width="6"/><g stroke="#111" stroke-width="1.8"><line y1="-40" y2="-34" transform="rotate(-120)"/><line y1="-40" y2="-34" transform="rotate(-90)"/><line y1="-40" y2="-34" transform="rotate(-60)"/><line y1="-40" y2="-34" transform="rotate(-30)"/><line y1="-40" y2="-34"/><line y1="-40" y2="-34" transform="rotate(30)"/><line y1="-40" y2="-34" transform="rotate(60)"/><line y1="-40" y2="-34" transform="rotate(90)"/><line y1="-40" y2="-34" transform="rotate(120)"/></g><text x="-27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">E</text><text x="27" y="24" font-size="13" font-family="Georgia,serif" fill="#111" text-anchor="middle">F</text><g id="nd"><line y2="-33" stroke="#7a2a14" stroke-width="2.4"/></g><circle r="4.5" fill="#6b4426"/></svg></div>
+  </div>
+</div><div id="hint">W/S throttle · A/D steer · Space drift · Shift boost · touch to drive<br>C camera · V vehicle · Z cruise · P phone · N next climate · <span id="spd">0 km/h</span></div>
 <div id="play-transition" aria-hidden="true"></div>
 <div id="start" class="menu-layer" role="dialog" aria-modal="true" aria-label="ZENDRIVE main menu">
   <div class="menu-content">
@@ -347,7 +421,7 @@ sky.renderOrder=-1;scene.add(sky);
 const H=(x,z)=>4*Math.sin(x*.012+1)*Math.cos(z*.01)+2*Math.sin(x*.035+z*.03)+Math.sin(z*.07-x*.05);
 const gg=new T.PlaneGeometry(640,640,96,96).rotateX(-Math.PI/2),gm=new T.Mesh(gg,new T.MeshLambertMaterial({flatShading:true}));gm.frustumCulled=false;scene.add(gm);
 let gx=1e9,gz=1e9;
-function ground(x,z){const a=gg.attributes.position,u=gg.attributes.uv,c=gg.attributes.color;for(let i=0;i<a.count;i++){const wx=x+a.getX(i),wz=z+a.getZ(i),d=rdist(wx,wz);a.setY(i,H(wx,wz)-Math.max(d<5.5?.95:d<12?.95*(12-d)/6.5:0,wsink(wx,wz)));u.setXY(i,wx*.12,wz*.12);patch(wx,wz,i,c)}a.needsUpdate=u.needsUpdate=c.needsUpdate=true;gm.position.set(x,0,z)}
+function ground(x,z){const a=gg.attributes.position,u=gg.attributes.uv,c=gg.attributes.color;for(let i=0;i<a.count;i++){const wx=x+a.getX(i),wz=z+a.getZ(i),d=rdist(wx,wz);a.setY(i,H(wx,wz)-Math.max(d<5.5?.22:d<12?.22*(12-d)/6.5:0,wsink(wx,wz)));u.setXY(i,wx*.12,wz*.12);patch(wx,wz,i,c)}a.needsUpdate=u.needsUpdate=c.needsUpdate=true;gm.position.set(x,0,z)}
 const hs=(a,b)=>{const h=Math.sin(a*127.1+b*311.7)*43758.5453;return h-Math.floor(h)},RR=9,S2=22,NT=(2*RR+1)**2;
 const tk=new T.InstancedMesh(new T.CylinderGeometry(.2,.3,2.4,6),new T.MeshLambertMaterial({color:0x5a4332}),NT),cr=new T.InstancedMesh(new T.ConeGeometry(1.6,4.5,7),new T.MeshLambertMaterial({flatShading:true}),NT);
 tk.frustumCulled=cr.frustumCulled=false;scene.add(tk,cr);const D=new T.Object3D;let tcx=1e9,tcz=1e9,tl=[];
@@ -372,7 +446,7 @@ let rz0=1e9,ob=[];
 function road(z0){const k0=z0/RS,pl=[];ob=[];const row=i=>{const z=z0-(i-RN/2)*RS,dx=(RX(z+1)-RX(z-1))/2,L=Math.hypot(dx,1);return{z,c:RX(z),nx:1/L,nz:-dx/L,ry:Math.atan2(dx,1),k:k0-(i-RN/2)}};
 RB.forEach(r=>{const p=r.g.attributes.position.array;for(let i=0;i<=RN;i++){const q=row(i);for(let s=0;s<2;s++){const o=r.off+(s?r.w:-r.w)/2,x=q.c+q.nx*o,z=q.z+q.nz*o,j=(i*2+s)*3;p[j]=x;p[j+1]=H(x,z)+.1+r.ly*.01;p[j+2]=z}}r.g.attributes.position.needsUpdate=true});
 let np=0,ns=0;for(let i=0;i<=RN;i++){const q=row(i),m=Math.round(q.k),pos=o=>{const x=q.c+q.nx*o,z=q.z+q.nz*o;return[x,H(x,z),z]};
-if(RL(m)){const[x,y,z]=pos(-RW-1.3);put(GR,i,x,y+.55,z,q.ry-1.5708,RS+.2,1,1);put(GP,i,x,y,z,q.ry,1,1,1)}else{hide(GR,i);hide(GP,i)}
+if(RL(m)&&!GBRK.has(m)){const[x,y,z]=pos(-RW-1.3);put(GR,i,x,y+.55,z,q.ry-1.5708,RS+.2,1,1);put(GP,i,x,y,z,q.ry,1,1,1)}else{hide(GR,i);hide(GP,i)}
 if(m%10==0&&np<16){const[x,y,z]=pos(RW+4.8);put(PO,np,x,y,z,0,1,1,1);put(AR,np,x,y,z,q.ry,1,1,1);pl.push({x,y,z,nx:q.nx,nz:q.nz});ob.push([x,z,.5]);np++}
 if(m%13==0&&ns<12){const[x,y,z]=pos(RW+1.8);put(SG,ns,x,y,z,0,1,1,1);put(SB,ns,x,y,z,q.ry,1,1,1);SB.setColorAt(ns,cc.set(SC[Math.floor(hs(m,3)*4)]));ob.push([x,z,.4]);ns++}}
 for(;np<16;np++){hide(PO,np);hide(AR,np)}for(;ns<12;ns++){hide(SG,ns);hide(SB,ns);SB.setColorAt(ns,cc.set(0))}
@@ -472,23 +546,83 @@ const ROAD_POOL_CAP=1600,ROAD_VIEW_RADIUS=345,ROAD_REAR_CUTOFF=500,
 const mkR=(col,off,w,dash,ly,alt)=>{const g=new T.BufferGeometry(),n=ROAD_POOL_CAP*4,idx=[],nm=new Float32Array(n*3);for(let i=0;i<n;i++)nm[i*3+1]=1;for(let i=0;i<ROAD_POOL_CAP;i++){const a=i*4;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
 g.setAttribute('position',new T.BufferAttribute(new Float32Array(n*3),3));g.setAttribute('normal',new T.BufferAttribute(nm,3));g.setIndex(idx);g.setDrawRange(0,0);const m=new T.Mesh(g,new T.MeshLambertMaterial({color:col,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:-ly,polygonOffsetUnits:-ly*4}));m.frustumCulled=false;scene.add(m);return{g,off,w,dash,ly,alt,m}},
 spec=alt=>[mkR('#3a3d44',0,RW*2,0,1,alt),mkR('#e8e4c8',0,.18,1,2,alt),mkR('#f2f2f2',-RW+.4,.16,0,2,alt),mkR('#f2f2f2',RW-.4,.16,0,2,alt)],RS2=spec(0);
+// Thin asphalt-coloured edge strips, just 10% of the previous width.
+// Bridges have no shoulder; meshes still share the fixed-size road pool.
+const ROAD_VERGES=[-1,1].map(side=>{const v=mkR('#3a3d44',0,0,0,1,0);v.side=side;
+ v.m.material.dispose();v.m.material=RS2[0].m.material; // exact same shader, colour and finish as asphalt
+ v.g.setAttribute('uv',new T.BufferAttribute(new Float32Array(ROAD_POOL_CAP*8),2));
+ v.m.renderOrder=-1;return v});
 const BS=im(new T.BoxGeometry(1.6,.08,.5),0x7a5530,20),BK=im(new T.BoxGeometry(1.6,.5,.07),0x7a5530,20),TR=im(new T.BoxGeometry(1.8,1.3,4).translate(0,.65,0),0xffffff,14),LC=new T.Color(0xe08a3a);
-const GS=[0,1].map(()=>{const g=new T.Group(),b=(w,h,d,c,x,y,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),new T.MeshLambertMaterial({color:c}));m.position.set(x,y,z);g.add(m)};
-b(16,.12,16,0x555a60,0,.06,0);b(10,.4,13,0xeeeeee,-1,5.2,0);b(10,.12,13.1,0xd02020,-1,4.95,0);[-5,3].forEach(x=>[-4,4].forEach(z=>b(.3,5,.3,0xb0b4b8,x,2.5,z)));[-2,2].forEach(z=>b(.5,1.3,.4,0xd02020,-1,.75,z));b(5,3,10,0xd8d2c0,7,1.5,0);b(5.2,.2,10.2,0x333a44,7,3.1,0);b(.2,1.2,4,0x1db954,-1,6.2,0);scene.add(g);g.visible=false;return g});
+// Single shared, emissive-style LED artwork for every gas station. No bloom pass,
+// extra point lights, or per-frame updates are required.
+const GAS_LED_TEX=(()=>{
+ const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=384;
+ const ctx=canvas.getContext('2d');
+ const grad=ctx.createLinearGradient(0,0,0,384);
+ grad.addColorStop(0,'#07121d');grad.addColorStop(.53,'#101e2c');grad.addColorStop(1,'#050b15');
+ ctx.fillStyle=grad;ctx.fillRect(0,0,1024,384);
+ // Inset panel and small diodes suggest an LED display at a distance.
+ ctx.strokeStyle='#0c364a';ctx.lineWidth=10;ctx.strokeRect(18,16,988,352);
+ ctx.fillStyle='rgba(65,181,214,.22)';
+ for(let y=28;y<368;y+=22)for(let x=25;x<1000;x+=22){
+   ctx.beginPath();ctx.arc(x,y,1.5,0,Math.PI*2);ctx.fill();
+ }
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 286px Arial,system-ui,sans-serif';
+ ctx.shadowColor='#2ac9ff';ctx.shadowBlur=52;ctx.fillStyle='#2d9ddb';ctx.fillText('GAS',512,195);
+ ctx.shadowBlur=22;ctx.shadowColor='#7ceaff';ctx.fillStyle='#d6fcff';ctx.fillText('GAS',512,195);
+ ctx.shadowBlur=0;ctx.fillStyle='#ffffff';ctx.fillText('GAS',512,195);
+ const texture=new T.CanvasTexture(canvas);
+ texture.anisotropy=Math.min(4,R.capabilities.getMaxAnisotropy());
+ return texture;
+})();
+const GAS_LED_MAT=new T.MeshBasicMaterial({map:GAS_LED_TEX,toneMapped:false,side:T.FrontSide});
+const GAS_FRAME_MAT=new T.MeshBasicMaterial({color:0x6cdeff,toneMapped:false});
+const GS=[0,1].map(()=>{
+ const g=new T.Group();
+ const b=(w,h,d,c,x,y,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),
+     new T.MeshLambertMaterial({color:c}));m.position.set(x,y,z);g.add(m)};
+ // Columns, pumps, and shop extend BELOW the terrain, so uneven ground
+ // cannot expose a floating base. The asphalt forecourt follows ground height.
+ b(10,.4,13,0xeeeeee,-1,5.2,0);
+ b(10,.12,13.1,0xd02020,-1,4.95,0);
+ [-5,3].forEach(x=>[-4,4].forEach(z=>b(.3,11,.3,0xb0b4b8,x,-.5,z)));
+ [-2,2].forEach(z=>b(.5,4.4,.4,0xd02020,-1,-.8,z));
+ b(5,9,10,0xd8d2c0,7,-1.5,0);
+ b(5.2,.2,10.2,0x333a44,7,3.1,0);
+ b(.2,1.2,4,0x1db954,-1,6.2,0);
+ // Large double-faced LED sign above the canopy, readable in either direction.
+ b(11.7,4.15,.36,0x07111e,-1,9.8,0);
+ for(const x of [-5.1,3.1])b(.24,2.5,.26,0x8895a5,x,6.58,0);
+ for(const side of [-1,1]){
+   const face=new T.Mesh(new T.PlaneGeometry(11.4,3.85),GAS_LED_MAT);
+   face.position.set(-1,9.8,side*.20);
+   face.rotation.y=side<0?Math.PI:0;
+   g.add(face);
+ }
+ const border=(w,h,d,x,y,z)=>{
+   const m=new T.Mesh(new T.BoxGeometry(w,h,d),GAS_FRAME_MAT);
+   m.position.set(x,y,z);g.add(m);
+ };
+ border(11.9,.12,.45,-1,11.91,0);border(11.9,.12,.45,-1,7.69,0);
+ border(.12,4.12,.45,-6.93,9.8,0);border(.12,4.12,.45,4.93,9.8,0);
+ scene.add(g);g.visible=false;return g;
+});
 const TCOL=[0xb04a3a,0x3a6ea5,0xd9c27a,0x5a8f5a,0x777777,0xe8e8e8],TC=[...Array(14)].map((_,k)=>({a:RX0+(k-7)*10,v:(k%2?-1:1)*(10+hs(k,4)*9)}));TC.forEach((c,k)=>TR.setColorAt(k,cc.set(TCOL[k%6])));TR.instanceColor.needsUpdate=true;
 let ri=RX0;
-function road2(){RP.m.visible=false;const rows=[];for(let i=0;i<=NW;i++){const k=Math.max(ROAD_MIN+1,Math.min(NR-2,ri-60+i)),a=PT[k];rows.push({k,x:PX[k],z:PZ[k],nx:Math.cos(a),nz:-Math.sin(a),a,ao:bo(k),sc:scAt(k)})}
- let np=0,ns=0,nb=0,g=0,ns3=0,nsm=0;const pl=[];ob=[];benches=[];signs=[];snowmen=[];lamps=[];
+function road2(){const rows=[];for(let i=0;i<=NW;i++){const k=Math.max(ROAD_MIN+1,Math.min(NR-2,ri-60+i)),a=PT[k];rows.push({k,x:PX[k],z:PZ[k],nx:Math.cos(a),nz:-Math.sin(a),a,ao:bo(k),sc:scAt(k)})}
+ let np=0,ns=0,nb=0,g=0,ns3=0,nsm=0;const pl=[];ob=[];benches=[];signs=[];snowmen=[];lamps=[],stationSites=[];
+ const gasEntranceBlocked=m=>{const next=Math.ceil(m/300)*300;return next-m>=0&&next-m<=18};
 for(let i=0;i<=NW;i++){const R=rows[i],m=R.k;const pos=o=>{const x=R.x+R.nx*o,z=R.z+R.nz*o;return[x,H(x,z),z]};
-if(RL(m)){const[x,y,z]=pos(-RW*R.sc-1.3);put(GR,i,x,y+.55,z,R.a+1.5708,RS+.2,1,1);put(GP,i,x,y,z,R.a,1,1,1)}else{hide(GR,i);hide(GP,i)}
+if(RL(m)&&!GBRK.has(m)){const[x,y,z]=pos(-RW*R.sc-1.3);put(GR,i,x,y+.55,z,R.a+1.5708,RS+.2,1,1);put(GP,i,x,y,z,R.a,1,1,1)}else{hide(GR,i);hide(GP,i)}
 {const o=RW*R.sc+.9,[x1,y1,z1]=pos(-o),[x2,y2,z2]=pos(o),sy=(m%2||S.hl<.3)?0:1;put(RFl,i,x1,y1+.1,z1,0,1,sy*.45,1);put(RFr,i,x2,y2+.1,z2,0,1,sy*.45,1)}
 {hide(BD,i);hide(BR,2*i);hide(BR,2*i+1)}
 if(m%6==2&&cityAt(m)&&ns3<40){const[x,y,z]=pos(-RW*R.sc-2.4);put(SLp,ns3,x,y,z,0,1,1,1);put(SLh,ns3,x,y,z,R.a,1,1,1);lamps.push([x,y+6.9,z]);ns3++}
 if(m%9==4&&snowAt(m)&&!SMB.has(m)&&nsm<12){const[x,y,z]=pos(RW*R.sc+3);put(SM1,nsm,x,y,z,0,1,1,1);put(SM2,nsm,x,y,z,0,1,1,1);put(SM3,nsm,x,y,z,0,1,1,1);snowmen.push([x,z,y,m]);nsm++}
-if(m%10==0&&np<16){const[x,y,z]=pos(RW*R.sc+4.8);put(PO,np,x,y,z,0,1,1,1);put(AR,np,x,y,z,R.a,1,1,1);pl.push({x,y,z,nx:R.nx,nz:R.nz,k:m});ob.push([x,z,.5,1]);np++}
-if(m%13==0&&!SBRK.has(m)&&ns<12){const[x,y,z]=pos(RW*R.sc+1.8);put(SG,ns,x,y,z,0,1,1,1);put(SB,ns,x,y,z,R.a,1,1,1);SB.setColorAt(ns,cc.set(SC[Math.floor(hs(m,3)*4)]));signs.push([x,z,y,m,R.a,Math.floor(hs(m,3)*4)]);ns++}
-if(benchAt(m)&&!BRK.has(m)&&nb<20){const[x,y,z]=pos(RW*R.sc+3.2),[x2,y2,z2]=pos(RW*R.sc+3.55);put(BS,nb,x,y+.5,z,R.a,1,1,1);put(BK,nb,x2,y2+.75,z2,R.a,1,1,1);benches.push([x,z,y,m,R.a]);nb++}
-if(m%300==0&&g<2){const[x,y,z]=pos(RW*R.sc+9);GS[g].position.set(x,y,z);GS[g].rotation.y=R.a;GS[g].visible=true;g++}}
+if(m%10==0&&!gasEntranceBlocked(m)&&np<16){const[x,y,z]=pos(RW*R.sc+4.8);put(PO,np,x,y,z,0,1,1,1);put(AR,np,x,y,z,R.a,1,1,1);pl.push({x,y,z,nx:R.nx,nz:R.nz,k:m});ob.push([x,z,.5,1]);np++}
+if(m%13==0&&!gasEntranceBlocked(m)&&!SBRK.has(m)&&ns<12){const[x,y,z]=pos(RW*R.sc+1.8);put(SG,ns,x,y,z,0,1,1,1);put(SB,ns,x,y,z,R.a,1,1,1);SB.setColorAt(ns,cc.set(SC[Math.floor(hs(m,3)*4)]));signs.push([x,z,y,m,R.a,Math.floor(hs(m,3)*4)]);ns++}
+if(benchAt(m)&&!gasEntranceBlocked(m)&&!BRK.has(m)&&nb<20){const[x,y,z]=pos(RW*R.sc+3.2),[x2,y2,z2]=pos(RW*R.sc+3.55);put(BS,nb,x,y+.5,z,R.a,1,1,1);put(BK,nb,x2,y2+.75,z2,R.a,1,1,1);benches.push([x,z,y,m,R.a]);nb++}
+if(m%300==0&&g<2){const[x,y,z]=pos(RW*R.sc+9);GS[g].position.set(x,y,z);GS[g].rotation.y=R.a;GS[g].visible=true;stationSites.push({m,x,y,z,a:R.a,sc:R.sc});g++}}
+ramps(stationSites); // One pooled mesh: forecourts + one curved entrance road per gas station.
 for(;np<16;np++){hide(PO,np);hide(AR,np)}for(;ns<12;ns++){hide(SG,ns);hide(SB,ns);SB.setColorAt(ns,cc.set(0))}for(;nb<20;nb++){hide(BS,nb);hide(BK,nb)}for(;g<2;g++)GS[g].visible=false;for(;ns3<40;ns3++){hide(SLp,ns3);hide(SLh,ns3)}for(;nsm<12;nsm++){hide(SM1,nsm);hide(SM2,nsm);hide(SM3,nsm)}
 [GR,GP,PO,AR,SG,SB,BS,BK,RFl,RFr,SLp,SLh,SM1,SM2,SM3,BD,BR].forEach(m=>m.instanceMatrix.needsUpdate=true);SB.instanceColor.needsUpdate=true;
 const w=WR.geometry.attributes.position.array,at=(A,B,o,t)=>[A.x+A.nx*o+(B.x+B.nx*o-A.x-A.nx*o)*t,A.y+(B.y-A.y)*t+7.6-4*t*(1-t),A.z+A.nz*o+(B.z+B.nz*o-A.z-A.nz*o)*t];let c=0;
@@ -524,6 +658,29 @@ function updateRoadSurfaces(force=false){
   r.g.setDrawRange(0,n*6);
   r.g.attributes.position.needsUpdate=true;
  }
+ // Extremely narrow shoulders are pooled with the asphalt, not stored offscreen.
+ // Inner edge touches the road; the outer edge follows the ground.
+ for(const v of ROAD_VERGES){
+  const p=v.g.attributes.position.array,uv=v.g.attributes.uv.array;
+  let n=0;
+  for(const k of segments){
+   if(bridgeC(k)!==null||bridgeC(k+1)!==null)continue;
+   const A=row(k),B=row(k+1);
+   for(const [R,q] of [[A,0],[B,2]]){
+    const inner=v.side*RW*R.sc,outer=v.side*(RW*R.sc+.265);
+    for(let s=0;s<2;s++){
+     const o=s?outer:inner,x=R.x+R.nx*o,z=R.z+R.nz*o;
+     const j=(n*4+q+s)*3,u=(n*4+q+s)*2;
+     p[j]=x;p[j+1]=s?H(x,z)-.065:roadYat(R,inner,0)+.13;p[j+2]=z;
+     uv[u]=x*.12;uv[u+1]=z*.12;
+    }
+   }
+   n++;
+  }
+  v.g.setDrawRange(0,n*6);
+  v.g.attributes.position.needsUpdate=true;v.g.attributes.uv.needsUpdate=true;
+  // Material is shared with RS2[0], so it always matches the road exactly.
+ }
  // Draw the exact same smooth bridge elevation in both the road and bridge deck.
  for(const {g,side} of bridgeStrips){
   const p=g.attributes.position.array;let n=0;
@@ -543,6 +700,19 @@ function updateRoadSurfaces(force=false){
   }
   g.setDrawRange(0,n*6);g.attributes.position.needsUpdate=true;
  }
+}
+// Keep cached vegetation out of the active gas-station asphalt parcels.
+// Visibility can change as stations stream in, without changing vegetation caches.
+function gasSurfaceContains(x,z){
+ for(const g of GS){
+  if(!g.visible)continue;
+  const dx=x-g.position.x,dz=z-g.position.z;
+  if(Math.abs(dx)>38||Math.abs(dz)>38)continue;
+  const a=g.rotation.y,ca=Math.cos(a),sa=Math.sin(a);
+  const lx=ca*dx-sa*dz,lz=sa*dx+ca*dz;
+  if(lx>=-7.9&&lx<=10.9&&Math.abs(lz)<=16.4)return true;
+ }
+ return false;
 }
 // forest (instanced pines + broadleaf) and grass tufts; old tree meshes switched off
 RB.forEach(r=>r.g && scene.children.find(m=>m.geometry===r.g)&&(scene.children.find(m=>m.geometry===r.g).visible=false));tk.count=cr.count=0;const NT2=729,TK=new T.InstancedMesh(tk.geometry,tk.material,NT2),TA=new T.InstancedMesh(new T.LatheGeometry([[0,4.6],[.5,3.5],[.3,3.5],[.9,2.5],[.55,2.5],[1.4,1.2],[0,1.2]].map(p=>new T.Vector2(p[0],p[1])),8).translate(0,-3.4,0),cr.material,NT2),TB=new T.InstancedMesh(new T.IcosahedronGeometry(1.5,1).scale(1,1.15,1),cr.material,NT2),GT=new T.InstancedMesh(new T.ConeGeometry(.28,.6,4).translate(0,.3,0),new T.MeshLambertMaterial({color:0xffffff}),900);
@@ -617,15 +787,68 @@ function collideNearbyBins(bins,radius,isTree){
   const a=bins.get((x+i)+','+(z+j));if(a)for(const t of a)collideItem(t,isTree);
  }
 }
-function trees3(cx,cz){let n=0,m1=0,m2=0,nb=0;const t2=[];for(let a=-20;a<=20;a++)for(let b=-20;b<=20;b++){const r=cell(cx+a,cz+b),t=r.t,u=r.b;if(t){const y=H(t.x,t.z),s=t.s;put(TK3,n++,t.x,y,t.z,0,s,s,s);cc.setHex(t.c);if(t.bl){TB3.setColorAt(m2,cc);put(TB3,m2++,t.x,y,t.z,t.r,s,s,s)}else{TA3.setColorAt(m1,cc);put(TA3,m1++,t.x,y,t.z,t.r,s,s,s)}t2.push([t.x,t.z,.5+.2*s])}
-if(u){cc.setHex(u.c);BU.setColorAt(nb,cc);put(BU,nb++,u.x,H(u.x,u.z),u.z,u.s*3,u.s,u.s,u.s)}}
+function trees3(cx,cz){let n=0,m1=0,m2=0,nb=0;const t2=[];for(let a=-20;a<=20;a++)for(let b=-20;b<=20;b++){const r=cell(cx+a,cz+b),t=r.t,u=r.b;if(t&&!gasSurfaceContains(t.x,t.z)){const y=H(t.x,t.z),s=t.s;put(TK3,n++,t.x,y,t.z,0,s,s,s);cc.setHex(t.c);if(t.bl){TB3.setColorAt(m2,cc);put(TB3,m2++,t.x,y,t.z,t.r,s,s,s)}else{TA3.setColorAt(m1,cc);put(TA3,m1++,t.x,y,t.z,t.r,s,s,s)}t2.push([t.x,t.z,.5+.2*s])}
+if(u&&!gasSurfaceContains(u.x,u.z)){cc.setHex(u.c);BU.setColorAt(nb,cc);put(BU,nb++,u.x,H(u.x,u.z),u.z,u.s*3,u.s,u.s,u.s)}}
 TK3.count=n;TA3.count=m1;TB3.count=m2;BU.count=nb;[TK3,TA3,TB3,BU].forEach(up);tl=t2;treeColliders=buildCollisionBins(t2)}
 function gcell(X,Z){const k=X+','+Z;let r=GG.get(k);if(r!==undefined)return r;r=0;const sh=Math.sin(X*.08+Math.sin(Z*.05)*2)*Math.cos(Z*.07+1)>.12;if(hs(X*2.1,Z*2.7)<=(sh?.97:.4+.5*Math.max(0,Math.sin(X*.2)*Math.cos(Z*.17)+.4))){const x=(X+hs(Z,X*3))*5,z=(Z+hs(X,Z*3))*5;if(!nr(x,z)&&!wet(x,z)){const f=BI.fl&&hs(X*5,Z*5)>.8;r={x,z,f,w:sh?4:1,s:sh?.28+hs(X,Z)*.22:.7+hs(X,Z)*.9,c:f?(hs(X,Z*3)>.5?0xff9ac1:0xffe36b):cc.setHex([0x2f5d2d,0x497a37,0x659141,0x7b9948,0x325832,0x879653][Math.floor(hs(X*5,Z*7)*6)]).lerp(S.g,.3).lerp(WH,S.sn*.87).multiplyScalar(.83+hs(X,Z*7)*.32).getHex()}}}if(GG.size>12000)prune(GG,GX,GZ,70);GG.set(k,r);return r}
-function grass3(cx,cz){let n=0;for(let a=-28;a<=28;a++)for(let b=-28;b<=28;b++){const r=gcell(cx+a,cz+b);if(!r||n>=4150)continue;put(GT3,n,r.x,H(r.x,r.z),r.z,r.x,r.s*r.w*.5,r.s*(r.f?1.6:1)*.5,r.s*r.w*.5);GT3.setColorAt(n,cc.setHex(r.c));n++}GT3.count=n;up(GT3)}
+function grass3(cx,cz){let n=0;for(let a=-28;a<=28;a++)for(let b=-28;b<=28;b++){const r=gcell(cx+a,cz+b);if(!r||n>=4150||gasSurfaceContains(r.x,r.z))continue;put(GT3,n,r.x,H(r.x,r.z),r.z,r.x,r.s*r.w*.5,r.s*(r.f?1.6:1)*.5,r.s*r.w*.5);GT3.setColorAt(n,cc.setHex(r.c));n++}GT3.count=n;up(GT3)}
 function traffic2(dt){TC.forEach((c,k)=>{if(!c.on){if(BI.tf&&Math.random()<.03){c.a=ri+78;c.on=1}else{hide(TR,k);return}}c.a+=c.v/4*dt;if(c.a>ri+80||c.a<ri-80){if(BI.tf)c.a=c.a<ri?ri+78:ri-78;else{c.on=0;hide(TR,k);return}}const i=Math.floor(c.a),f=c.a-i,t=PT[i],o=c.v>0?2.3:-2.3,x=PX[i]+(PX[i+1]-PX[i])*f+Math.cos(t)*o,z=PZ[i]+(PZ[i+1]-PZ[i])*f-Math.sin(t)*o;put(TR,k,x,H(x,z)+.14,z,c.v>0?t:t+Math.PI,1,1,1)});TR.instanceMatrix.needsUpdate=true}
-// short entry/exit roads for the gas station (smooth ramps from the road edge onto the forecourt)
+// Gas-station driveway and ground-following asphalt forecourt.
+// All stations share ONE bounded GPU mesh, rather than creating persistent meshes.
 const RP=mkR('#3a3d44',0,4,0,1,0),sm=u=>u*u*(3-2*u);
-function ramps(m){const p=RP.g.attributes.position.array;p.fill(0);let q=0;[[m-9,0],[m,1]].forEach(([j0,ex])=>{const L=i=>ex?10-8*sm(i/8):2+8*sm(i/8);for(let i=0;i<8;i++){[[j0+i,i],[j0+i+1,i+1]].forEach(([j,ii],r)=>[-2,2].forEach((s,t)=>{const o=L(ii)+s,x=PX[j]+Math.cos(PT[j])*o,z=PZ[j]-Math.sin(PT[j])*o,k=(q*4+r*2+t)*3;p[k]=x;p[k+1]=H(x,z)+.12;p[k+2]=z}));q++}});RP.g.setDrawRange(0,q*6);RP.g.attributes.position.needsUpdate=true}
+RP.m.material.dispose();
+RP.m.material=RS2[0].m.material; // identical asphalt colour / lighting
+function ramps(sites){
+ const p=RP.g.attributes.position.array;
+ let count=0;
+ // The established four-vertex order matches the reusable road geometry.
+ const quad=(a,b,c,d)=>{
+  if(count>=ROAD_POOL_CAP)return;
+  [a,b,c,d].forEach((v,i)=>{const j=(count*4+i)*3;p[j]=v[0];p[j+1]=v[1];p[j+2]=v[2]});
+  count++;
+ };
+ for(const site of sites){
+  const ca=Math.cos(site.a),sa=Math.sin(site.a);
+  // The forecourt lies over the terrain (never hovering like a large flat slab).
+  // It reaches underneath the canopy, pumps, shop and entrance road.
+  const at=(x,z)=>{
+   const wx=site.x+ca*x+sa*z,wz=site.z-sa*x+ca*z;
+   return[wx,H(wx,wz)+.06,wz];
+  };
+  const X0=-7.6,X1=10.6,Z0=-16,Z1=16;
+  const NX=9,NZ=16;
+  for(let iz=0;iz<NZ;iz++){
+   const z0=Z0+(Z1-Z0)*iz/NZ,z1=Z0+(Z1-Z0)*(iz+1)/NZ;
+   for(let ix=0;ix<NX;ix++){
+    const x0=X0+(X1-X0)*ix/NX,x1=X0+(X1-X0)*(ix+1)/NX;
+    quad(at(x0,z0),at(x1,z0),at(x0,z1),at(x1,z1));
+   }
+  }
+  // Single entrance road: approach the station from the preceding road section.
+  // Heights blend from the real road plane into the terrain-following forecourt.
+  for(const dir of [-1]){ // negative road indices lead INTO the station; no exit arm
+   const N=15;
+   const point=j=>{
+    const k=site.m+dir*(18-j),u=j/N,a=PT[k],sn=Math.sin(a),cs=Math.cos(a);
+    const sc=scAt(k),off=(RW*sc-1.2)+(RW*site.sc+9-(RW*sc-1.2))*sm(u);
+    const R={k,x:PX[k],z:PZ[k],nx:cs,nz:-sn,sc,ao:0};
+    return [-2.35,2.35].map(side=>{
+     const o=off+side,x=PX[k]+cs*o,z=PZ[k]-sn*o;
+     const yRoad=roadYat(R,o,0),yGround=H(x,z);
+     const blend=sm(Math.min(1,u*3));
+     return[x,yRoad*(1-blend)+yGround*blend+.14*(1-blend)+.065*blend,z];
+    });
+   };
+   for(let j=0;j<N;j++){
+    const A=point(j),B=point(j+1);
+    quad(A[0],A[1],B[0],B[1]);
+   }
+  }
+ }
+ RP.g.setDrawRange(0,count*6);
+ RP.g.attributes.position.needsUpdate=true;
+ RP.m.visible=count>0;
+}
 // better tree models: taller layered pines, fuller multi-blob broadleaf, branching trunks
 TK3.geometry=mg([[cyl(.14,.24,3.2,7),0,1.6,0,1,1,1],[cyl(.24,.5,.6,7),0,.3,0,1,1,1],[cyl(.05,.09,1.4,5),.5,2.6,.1,1,1,1],[cyl(.05,.08,1.2,5),-.45,2.9,-.1,1,1,1]]);
 TA3.geometry=flat(new T.LatheGeometry([[0,7.4],[.35,6.2],[.18,6.2],[.7,5.2],[.35,5.2],[1.05,4.1],[.5,4.1],[1.4,3],[.7,3],[1.8,1.8],[.9,1.8],[0,1.6]].reverse().map(p=>new T.Vector2(p[0],p[1])),10));
@@ -633,9 +856,80 @@ TB3.geometry=mg([[ico(1.35,1),0,3.8,0,1,.85,1],[ico(1.05,1),1.1,3.3,.4,1,.9,1],[
 // breakable benches: debris pieces fly off when hit; broken benches stay gone
 const BRK=new Set(),DS=im(new T.BoxGeometry(.8,.1,.5),0x7a5530,40),DB=im(new T.BoxGeometry(.8,.5,.07),0x7a5530,40);DS.count=DB.count=0;let PCS=[],benches=[];
 function fly(dt){let a=0,c=0;PCS=PCS.filter(p=>p.t<6);PCS.forEach(p=>{p.t+=dt;p.vy-=14*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;const g=H(p.x,p.z)+.1;if(p.y<g){p.y=g;p.vy*=-.35;p.vx*=.7;p.vz*=.7;p.wx*=.6;p.wy*=.6;p.wz*=.6}p.rx+=p.wx*dt;p.ry+=p.wy*dt;p.rz+=p.wz*dt;D2.position.set(p.x,p.y,p.z);D2.rotation.set(p.rx,p.ry,p.rz);D2.scale.set(1,1,1);D2.updateMatrix();if(p.k){if(c<40)DB.setMatrixAt(c++,D2.matrix)}else if(a<40)DS.setMatrixAt(a++,D2.matrix)});DS.count=a;DB.count=c;DS.instanceMatrix.needsUpdate=DB.instanceMatrix.needsUpdate=true}
+// Breakable roadside guardrails. Each road-index section has a stable ID,
+// so reused InstancedMesh slots cannot accidentally resurrect a broken rail.
+const GBRK=new Set(),RAIL_FRAGMENT_LIMIT=72;
+const GBEAM=im(new T.BoxGeometry(1.25,.28,.09),0xaab3bc,RAIL_FRAGMENT_LIMIT),
+      GSTAKE=im(new T.BoxGeometry(.10,.7,.11),0x858d97,RAIL_FRAGMENT_LIMIT);
+GBEAM.count=GSTAKE.count=0;
+let railDebris=[],railCooldown=0;
+function breakGuardrail(k){
+ if(GBRK.has(k)||!RL(k))return false;
+ GBRK.add(k);
+ const a=PT[k],offset=RW*scAt(k)+1.3,
+       x=PX[k]-Math.cos(a)*offset,z=PZ[k]+Math.sin(a)*offset,
+       y=H(x,z),tx=-Math.sin(a),tz=-Math.cos(a),
+       vx=-Math.sin(P.d)*P.v,vz=-Math.cos(P.d)*P.v;
+ // Two short torn-off rail pieces and the detached supporting stake.
+ for(let j=0;j<3;j++){
+  const stake=j===2,along=stake?0:(j===0?-.75:.75);
+  railDebris.push({stake,x:x+tx*along,y:y+(stake?.35:.57),z:z+tz*along,
+   vx:vx*.55+(Math.random()-.5)*5,vy:2.6+Math.random()*4,
+   vz:vz*.55+(Math.random()-.5)*5,
+   rx:0,ry:a+Math.PI/2,rz:0,
+   wx:(Math.random()-.5)*9,wy:(Math.random()-.5)*11,wz:(Math.random()-.5)*9,t:0});
+ }
+ // Limit both CPU work and draw instances during a string of collisions.
+ if(railDebris.length>RAIL_FRAGMENT_LIMIT)railDebris.splice(0,railDebris.length-RAIL_FRAGMENT_LIMIT);
+ return true;
+}
+function railHit(dt){
+ railCooldown=Math.max(0,railCooldown-dt);
+ if(railCooldown>0||Math.abs(P.v)<2.8)return;
+ // Only test the few road samples near the car; no distant guardrail collisions.
+ let target=-1,best=Infinity;
+ for(let k=Math.max(ROAD_MIN+2,ri-3);k<=Math.min(NR-3,ri+3);k++){
+  if(!RL(k)||GBRK.has(k))continue;
+  const a=PT[k],dx=P.x-PX[k],dz=P.z-PZ[k],
+        along=-dx*Math.sin(a)-dz*Math.cos(a),
+        side=dx*Math.cos(a)-dz*Math.sin(a),
+        sideErr=Math.abs(side+RW*scAt(k)+1.3);
+  if(Math.abs(along)>2.5||sideErr>1.25)continue;
+  const score=sideErr+Math.abs(along)*.12;
+  if(score<best){best=score;target=k}
+ }
+ if(target<0)return;
+ const impact=Math.abs(P.v),radius=impact>18?1:0;
+ let smashed=false;
+ for(let k=target-radius;k<=target+radius;k++){
+  if(k>ROAD_MIN&&k<NR-1)smashed=breakGuardrail(k)||smashed;
+ }
+ if(!smashed)return;
+ P.v*=.77;
+ railCooldown=.32;
+ if(sfx)sfx('sign');
+ if(crashfx&&hitCool<=0){crashfx(Math.min(.8,impact/40));hitCool=.35}
+ road2(); // hide the broken rail and stake immediately
+}
+function animateRailDebris(dt){
+ if(!railDebris.length){GBEAM.count=GSTAKE.count=0;return;}
+ let nb=0,np=0;
+ railDebris=railDebris.filter(p=>p.t<5&&(p.x-P.x)**2+(p.z-P.z)**2<160*160);
+ for(const p of railDebris){
+  p.t+=dt;p.vy-=13.5*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;
+  const floor=H(p.x,p.z)+(p.stake?.36:.15);
+  if(p.y<floor){p.y=floor;p.vy*=-.3;p.vx*=.72;p.vz*=.72;p.wx*=.7;p.wy*=.7;p.wz*=.7}
+  p.rx+=p.wx*dt;p.ry+=p.wy*dt;p.rz+=p.wz*dt;
+  D2.position.set(p.x,p.y,p.z);D2.rotation.set(p.rx,p.ry,p.rz);D2.scale.set(1,1,1);D2.updateMatrix();
+  if(p.stake){if(np<RAIL_FRAGMENT_LIMIT)GSTAKE.setMatrixAt(np++,D2.matrix)}
+  else if(nb<RAIL_FRAGMENT_LIMIT)GBEAM.setMatrixAt(nb++,D2.matrix);
+ }
+ GBEAM.count=nb;GSTAKE.count=np;
+ GBEAM.instanceMatrix.needsUpdate=GSTAKE.instanceMatrix.needsUpdate=true;
+}
 function extras(dt){if(pend){trv+=Math.abs(P.v)*dt;if(trv>170){BI=pend;pend=null;if(BX!==1e9&&BZ!==1e9)bldgs(BX,BZ)}}const tl=VS.car.o.userData.tl;if(tl){const br=(keys.s||keys.ArrowDown||keys[' '])&&P.v>.5;tl[0].color.setHex(br?0xff2a2a:0x6a0a0a);tl[1].color.setHex(P.v<-.5?0xffffff:0x44403a)}
 $('warn').classList.toggle('on',!infiniteBoost&&P.fu<.15);extras2(dt);{const o=bo(ri),a=PT[ri],dd=Math.min(Math.hypot(P.x-PX[ri],P.z-PZ[ri]),o>0?Math.hypot(P.x-PX[ri]-Math.cos(a)*o,P.z-PZ[ri]+Math.sin(a)*o):1e9);offT=dd>22?offT+dt:0;$('rr').classList.toggle('on',offT>2.5)}const cl=$('phone').classList.contains('closed');if(!cl&&!phHov&&performance.now()-phAct>10000)$('phone').classList.add('closed');$('mp').style.display=cl?'flex':'none';if(cl){const s=SONGS[cur];$('mpt').style.background='linear-gradient(160deg,'+s.top+','+s.bot+')';$('mpt').textContent=s.e;$('mpn').textContent=s.n;$('mpb').style.width=Math.min(100,songT/musicDuration()*100)+'%'}
-benches.forEach(b=>{if(Math.hypot(P.x-b[0],P.z-b[1])<1.8&&Math.abs(P.v)>2&&!BRK.has(b[3])){BRK.add(b[3]);const fx0=-Math.sin(P.d)*P.v,fz0=-Math.cos(P.d)*P.v;for(let i=0;i<4;i++){const o=i%2?.4:-.4;PCS.push({k:i<2?0:1,x:b[0]+o*Math.cos(b[4]),y:b[2]+.5,z:b[1]-o*Math.sin(b[4]),vx:fx0*.9+(Math.random()-.5)*6,vy:4+Math.random()*5,vz:fz0*.9+(Math.random()-.5)*6,rx:0,ry:b[4],rz:0,wx:(Math.random()-.5)*14,wy:(Math.random()-.5)*14,wz:(Math.random()-.5)*14,t:0})}P.v*=.88;sfx&&sfx('bench');road2()}});signHit();fly(dt);fly2(dt)}
+benches.forEach(b=>{if(Math.hypot(P.x-b[0],P.z-b[1])<1.8&&Math.abs(P.v)>2&&!BRK.has(b[3])){BRK.add(b[3]);const fx0=-Math.sin(P.d)*P.v,fz0=-Math.cos(P.d)*P.v;for(let i=0;i<4;i++){const o=i%2?.4:-.4;PCS.push({k:i<2?0:1,x:b[0]+o*Math.cos(b[4]),y:b[2]+.5,z:b[1]-o*Math.sin(b[4]),vx:fx0*.9+(Math.random()-.5)*6,vy:4+Math.random()*5,vz:fz0*.9+(Math.random()-.5)*6,rx:0,ry:b[4],rz:0,wx:(Math.random()-.5)*14,wy:(Math.random()-.5)*14,wz:(Math.random()-.5)*14,t:0})}P.v*=.88;sfx&&sfx('bench');road2()}});signHit();fly(dt);fly2(dt);animateRailDebris(dt)}
 // R: snap back onto the nearest point of the road, facing along it; biome change is delayed by distance travelled
 let offT=0,pend=null,trv=0;function ret(){
  ensureNetwork();
@@ -704,6 +998,9 @@ const gtx2=(()=>{
  return t;
 })();
 gm.material.map=gtx2;gm.material.vertexColors=true;gm.material.color.set(0xffffff);gm.material.needsUpdate=true;gg.setAttribute('color',new T.BufferAttribute(new Float32Array(gg.attributes.position.count*3),3));
+ROAD_VERGES.forEach(v=>{v.m.material.map=gtx2;v.m.material.side=T.DoubleSide;
+ v.m.material.polygonOffset=true;v.m.material.polygonOffsetFactor=-.5;
+ v.m.material.needsUpdate=true});
 const pc=new T.Color(),cyl2=new T.Color(0xb7b24a),cbr=new T.Color(0x8c6a3c);
 function rdist(x,z){const a=Math.round(x/14),b=Math.round(z/14);let m=1e9;for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const p=RGM.get((a+i)+','+(b+j));if(p)for(let k=0;k<p.length;k+=2){const d=(p[k]-x)**2+(p[k+1]-z)**2;if(d<m)m=d}}return Math.sqrt(m)}
 // Large natural grassland patches: wet dark green, bright meadow, moss, olive and dry grass.
@@ -900,6 +1197,9 @@ function HP(x,z){
   if(d<best){best=d;bi=i;bf=f;blat=dx*Math.cos(a)-dz*Math.sin(a);bwidth=RW*scAt(i)}
  }
  if(best>(bwidth+4)**2)return H(x,z);
+ // A bridge has a vertical side, not a drivable slope from the surrounding land.
+ // Keep the vehicle at terrain height outside its deck/side-rail envelope.
+ if((bridgeC(bi)!==null||bridgeC(bi+1)!==null)&&Math.abs(blat)>bwidth+.5)return H(x,z);
  const surf=i=>{
   const a=PT[i],R={k:i,x:PX[i],z:PZ[i],nx:Math.cos(a),nz:-Math.sin(a),ao:0,sc:scAt(i)};
   return roadYat(R,blat,0);
@@ -907,6 +1207,52 @@ function HP(x,z){
  const height=surf(bi)*(1-bf)+surf(bi+1)*bf;
  const edge=ease5((Math.sqrt(best)-bwidth-.4)/3);
  return height*(1-edge)+H(x,z)*edge;
+}
+// Solid, non-breakable bridge side walls. The visible metal side strips above
+// use the same road edge. These collision walls leave the two road approaches
+// open (the outermost samples of each bridge are not fenced across its ends).
+// Check only active nearby bridges, not the entire endless road.
+function blockBridgeSideEntry(oldX,oldZ){
+ if(!BRC.size)return false;
+ let nearest=null,bestD=Infinity;
+ for(const c of BRC){
+  const first=Math.max(ROAD_MIN+1,c-11),last=Math.min(NR-2,c+10);
+  for(let k=first;k<=last;k++){
+   const vx=PX[k+1]-PX[k],vz=PZ[k+1]-PZ[k],len2=vx*vx+vz*vz;
+   if(len2<.01)continue;
+   const rawF=((P.x-PX[k])*vx+(P.z-PZ[k])*vz)/len2;
+   // Do not extend a side wall longitudinally beyond the real segment.
+   if(rawF<-.1||rawF>1.1)continue;
+   const f=Math.max(0,Math.min(1,rawF));
+   // The ends remain open so the bridge is accessible from the road normally.
+   if(Math.abs(k+f-c)>10.5)continue;
+   const cx=PX[k]+vx*f,cz=PZ[k]+vz*f;
+   const dist2=(P.x-cx)**2+(P.z-cz)**2;
+   if(dist2>=bestD)continue;
+   const len=Math.sqrt(len2);
+   nearest={k,cx,cz,nx:-vz/len,nz:vx/len};bestD=dist2;
+  }
+ }
+ if(!nearest)return false;
+ const edge=RW*scAt(nearest.k)+.4;
+ const radius=veh==='bike'?.58:1.03;
+ if(bestD>(edge+radius+4)**2)return false;
+ const lateral=(P.x-nearest.cx)*nearest.nx+(P.z-nearest.cz)*nearest.nz;
+ const previous=(oldX-nearest.cx)*nearest.nx+(oldZ-nearest.cz)*nearest.nz;
+ for(const side of [-1,1]){
+  const was=side*previous,now=side*lateral;
+  let target=null;
+  // Already on the bridge: the rail stops leaving sideways.
+  if(was<=edge&&now>edge-radius)target=side*(edge-radius);
+  // Approaching from off-road: the rail stops climbing onto the deck sideways.
+  else if(was>edge&&now<edge+radius)target=side*(edge+radius);
+  if(target===null)continue;
+  const delta=target-lateral;
+  P.x+=nearest.nx*delta;P.z+=nearest.nz*delta;
+  P.v*=.48;
+  return true;
+ }
+ return false;
 }
 BD=im(new T.BoxGeometry(1,1,1),0x8a8d92,NW+1),BR=im(new T.BoxGeometry(1,.5,.12),0xb8bcc2,2*NW+2);
 // Seamless deck/rail strips: shared vertices at every road row, no individual slabs to bump over.
@@ -996,7 +1342,19 @@ const prune=(M,cx,cz,R)=>{for(const k of M.keys()){const i=k.indexOf(','),a=+k.s
 let lamps=[];RFl.material=new T.MeshBasicMaterial({color:0xff3030});RFr.material=new T.MeshBasicMaterial({color:0xfff4d8});SLh.material=new T.MeshBasicMaterial({color:0xffe0a0});
 const PL4=[0,1,2,3].map(()=>{const l=new T.PointLight(0xffd9a0,0,34,1);scene.add(l);return l});
 {let t='';for(let a=-120;a<=120;a+=10){const M=a%60==0,m=a%30==0;t+='<line y1="-40" y2="'+(M?-31:m?-34:-36)+'" transform="rotate('+a+')" stroke-width="'+(M?2:m?1.4:.8)+'"/>'}
-document.querySelector('#fuel svg').outerHTML='<svg viewBox="-50 -50 100 100"><circle r="46" fill="#d6d2c8" stroke="#6b4426" stroke-width="3"/><g id="tk" stroke="#111">'+t+'</g><text x="-22" y="19" font-size="11" font-family="Georgia,serif" fill="#111" text-anchor="middle">E</text><text x="22" y="19" font-size="11" font-family="Georgia,serif" fill="#111" text-anchor="middle">F</text><g id="nd"><line y2="-32" stroke="#6b4426" stroke-width="2"/><circle r="3" fill="#6b4426"/></g></svg>'}
+// Styled like the speedometer; existing id=nd rotation and cheat effects remain compatible.
+let marks='';for(let a=-120;a<=120;a+=10){const major=a%60===0,mid=a%30===0;
+ marks+='<line y1="-76" y2="'+(major?-64:mid?-69:-72)+'" transform="rotate('+a+')" stroke-width="'+(major?2.3:mid?1.4:.8)+'"/>'}
+document.querySelector('#fuel svg').outerHTML='<svg viewBox="-100 -100 200 200" role="img" aria-label="Fuel gauge">'+
+ '<defs><radialGradient id="fuel-face" cx="46%" cy="38%" r="68%"><stop offset="0%" stop-color="#2d3645"/><stop offset="78%" stop-color="#111924"/><stop offset="100%" stop-color="#070b13"/></radialGradient></defs>'+
+ '<circle r="95" fill="#141920" stroke="#cdd5dc" stroke-width="3.5"/>'+
+ '<circle r="89" fill="url(#fuel-face)" stroke="#5f7180" stroke-width="1.2"/>'+
+ '<circle r="81" fill="none" stroke="#e5edfa" stroke-opacity=".12" stroke-width="1"/>'+
+ '<g id="tk" stroke="#f3f4f2" stroke-linecap="round">'+marks+'</g>'+
+ '<text x="-46" y="31" text-anchor="middle" fill="#eff5fa" font-size="17" font-weight="650" font-family="system-ui,Arial,sans-serif">E</text>'+
+ '<text x="46" y="31" text-anchor="middle" fill="#eff5fa" font-size="17" font-weight="650" font-family="system-ui,Arial,sans-serif">F</text>'+
+ '<text y="-26" text-anchor="middle" fill="#9daec4" font-size="12" letter-spacing="3" font-family="system-ui,Arial,sans-serif">FUEL</text>'+
+ '<g id="nd"><line y2="-73" stroke="#ff735a" stroke-width="3.5" stroke-linecap="round"/><circle r="6.2" fill="#cbd4de" stroke="#4f5a69" stroke-width="2.5"/></g></svg>'}
 // ---- v7: 6 real streetlights; short grass patches along both road edges (cached per road row, colour from climate at generation)
 PL4.push(...[0,1].map(()=>{const l=new T.PointLight(0xffd9a0,0,34,1);scene.add(l);return l}));
 // Curved strips instead of upright cones. Each clump has four narrow blades,
@@ -1855,6 +2213,7 @@ if(fx.width!=innerWidth||fx.height!=innerHeight){fx.width=innerWidth;fx.height=i
 for(let i=0;i<(lowMemoryDevice?28:40);i++){const an=Math.random()*6.283,r0=m*(.35+Math.random()*.4),r1=r0+m*(.15+Math.random()*.3)*a;fc.strokeStyle='rgba(255,255,255,'+(.08+Math.random()*.3*a)+')';fc.beginPath();fc.moveTo(cx+Math.cos(an)*r0,cy+Math.sin(an)*r0);fc.lineTo(cx+Math.cos(an)*r1,cy+Math.sin(an)*r1);fc.stroke()}}
 const clk=new T.Clock,tmp=new T.Vector3,cl=(a,m)=>Math.max(-m,Math.min(m,a));
 let weatherElapsed=0,lastMiniUpdate=-Infinity;
+let tripMeters=0;
 function frame(){requestAnimationFrame(frame);const elapsedFrame=clk.getDelta(),dt=(paused||!gameStarted)?0:Math.min(elapsedFrame,.05),now=clk.elapsedTime,k=1-Math.exp(-dt*.04),s=SONGS[cur],sp=VS[veh];
 adaptResolution(elapsedFrame);
 advanceMusicFades(Math.min(elapsedFrame,.05));
@@ -1878,11 +2237,16 @@ const ad=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b)),sl0=ad(P.h,P.d),asl=Math
 P.h+=P.steer*sp.st*dt*cl(P.v/6,1)*(1+drift*.5+ctr*Math.max(0,asl-.4))/(1+Math.abs(P.v)/50);if(!st)P.h-=sl0*Math.min(1,dt*1.2);
 {const s2=ad(P.h,P.d);if(Math.abs(s2)>1)P.h=P.d+Math.sign(s2)}
 P.d+=ad(P.h,P.d)*Math.min(1,(P.v<0?8:(drift?2.2:5)*(veh=='bike'?1.5:1)*(1+4*Math.max(0,asl-.8)))*dt);P.sl=Math.abs(ad(P.h,P.d));P.v*=1-Math.min(.5,P.sl)*.25*dt;
+const oldDriveX=P.x,oldDriveZ=P.z;
 P.x-=Math.sin(P.d)*P.v*dt;P.z-=Math.cos(P.d)*P.v*dt;
+tripMeters += Math.abs(P.v)*dt;
 ensureNetwork();
 const nextRoadIndex=nearestRoadIndex(P.x,P.z,ri);
 if(nextRoadIndex!==ri){ri=nextRoadIndex;rz0=1}
-{const a=PT[ri],rl=(P.x-PX[ri])*Math.cos(a)-(P.z-PZ[ri])*Math.sin(a)+RW*scAt(ri)+1.3;if(RL(ri)&&!bo(ri)&&Math.abs(rl)<.7){const d=Math.sign(rl)*(.7-Math.abs(rl));P.x+=Math.cos(a)*d;P.z-=Math.sin(a)*d;P.v*=.98}}// Only nearby grid cells can collide; no scans across all visible trees.
+waterNear(ri); // Keep collision walls in sync with newly streamed bridge segments.
+blockBridgeSideEntry(oldDriveX,oldDriveZ);
+railHit(dt);
+{const a=PT[ri],rl=(P.x-PX[ri])*Math.cos(a)-(P.z-PZ[ri])*Math.sin(a)+RW*scAt(ri)+1.3;if(RL(ri)&&!GBRK.has(ri)&&Math.abs(rl)<.7){const d=Math.sign(rl)*(.7-Math.abs(rl));P.x+=Math.cos(a)*d;P.z-=Math.sin(a)*d;P.v*=.98}}// Only nearby grid cells can collide; no scans across all visible trees.
 for(const t of ob)collideItem(t,false);
 collideNearbyBins(treeColliders,1,true);
 if(BLD.visible)collideNearbyBins(buildingColliders,2,false);
@@ -1926,7 +2290,12 @@ const tyreIntensity=Math.min(1,slide+handbrakeSlide)*tyreSpeed*(isCar?1:.6);
 sq.gain.setTargetAtTime(.025*tyreIntensity,t,tyreIntensity>.02?.10:.22);
 tyreSquealGain.gain.setTargetAtTime(.013*tyreIntensity,t,tyreIntensity>.02?.12:.26);
 tyreSquealFilter.frequency.setTargetAtTime(1150+850*sv+Math.min(330,P.sl*420),t,.18)}
-if(playing){if(customTrackActive){songT=Number.isFinite(trackAudio.currentTime)?trackAudio.currentTime:0}else{songT+=dt;if(songT>180){if(seasonPinned){songT=0;beat=0}else nextSeason()}}}late(dt,now);$('prog').style.width=Math.min(100,songT/musicDuration()*100)+'%';$('tcur').textContent=showTime(songT);document.querySelector('.tm span:last-child').textContent=showTime(musicDuration());$('spd').textContent=Math.round(Math.abs(P.v)*3.6)+' km/h'
+if(playing){if(customTrackActive){songT=Number.isFinite(trackAudio.currentTime)?trackAudio.currentTime:0}else{songT+=dt;if(songT>180){if(seasonPinned){songT=0;beat=0}else nextSeason()}}}late(dt,now);$('prog').style.width=Math.min(100,songT/musicDuration()*100)+'%';$('tcur').textContent=showTime(songT);document.querySelector('.tm span:last-child').textContent=showTime(musicDuration());{const speedKmh=Math.abs(P.v)*3.6;
+  $('spd').textContent=Math.round(speedKmh)+' km/h';
+  $('speed-number').textContent=Math.round(speedKmh);
+  $('speed-needle').setAttribute('transform','rotate('+(-120+240*Math.min(1,speedKmh/200)).toFixed(2)+')');
+  $('trip-km').textContent=(tripMeters/1000).toFixed(1);
+}
 ;render()}
 frame();
 } else {
