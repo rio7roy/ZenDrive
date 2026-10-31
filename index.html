@@ -282,8 +282,8 @@ body.hide-shortcuts #mp .key-tip{opacity:0}body.hide-shortcuts #mp .phone-tip,bo
     <p class="touch-note">Hold the screen to accelerate. Press the left or right half to steer. Double-tap the road and hold the second touch to boost; lift your finger to stop. Tap the mini-player to open your phone; use its playback controls to play, pause, or change songs. Fuel is restored at roadside stations.</p>
     <section class="audio-settings" aria-label="Sound settings">
       <div class="control-section">Sound mixer</div>
-      <div class="audio-slider-row"><label for="vehicle-volume">Vehicle sound</label><input id="vehicle-volume" type="range" min="0" max="100" step="1" value="40" aria-label="Engine and tyre sound volume"><output id="vehicle-volume-value" for="vehicle-volume">40%</output></div>
-      <div class="audio-slider-row"><label for="music-volume">Music</label><input id="music-volume" type="range" min="0" max="100" step="1" value="4" aria-label="Song volume"><output id="music-volume-value" for="music-volume">4%</output></div>
+      <div class="audio-slider-row"><label for="vehicle-volume">Vehicle sound</label><input id="vehicle-volume" type="range" min="0" max="100" step="1" value="35" aria-label="Engine and tyre sound volume"><output id="vehicle-volume-value" for="vehicle-volume">40%</output></div>
+      <div class="audio-slider-row"><label for="music-volume">Music</label><input id="music-volume" type="range" min="0" max="100" step="1" value="30" aria-label="Song volume"><output id="music-volume-value" for="music-volume">4%</output></div>
       <div class="audio-slider-row"><label for="effects-volume">Other sound effects</label><input id="effects-volume" type="range" min="0" max="100" step="1" value="25" aria-label="Weather, collisions, and effects volume"><output id="effects-volume-value" for="effects-volume">25%</output></div>
       <small>Vehicle = engine and tyres; Effects = collisions, wind, weather, and environment. Skipping or changing climate starts the next track within 0.35 seconds and completes its fade-in within about 2 seconds. Natural track endings fade out over the last 3 seconds. SOUND mutes all three.</small>
     </section>
@@ -357,8 +357,8 @@ let cur=1,playing=true,songT=0,Q=[],PL=[],bt,paused=false,gameStarted=false,game
 // Slider values persist when the browser permits local storage (including file://).
 function savedVolume(key,fallback){try{const x=localStorage.getItem(key);if(x===null)return fallback;const v=Number(x);return Number.isFinite(v)?Math.max(0,Math.min(1,v)):fallback}catch(_){return fallback}}
 // New mixer defaults apply once, without being overridden by the old two-slider settings.
-let vehicleVolume=savedVolume('zendrive_vehicle_volume_v2',.40),
-    musicVolume=savedVolume('zendrive_music_volume_v2',.04),
+let vehicleVolume=savedVolume('zendrive_vehicle_volume_v2',.35),
+    musicVolume=savedVolume('zendrive_music_volume_v2',.30),
     effectsVolume=savedVolume('zendrive_effects_volume_v2',.25);
 const pz=()=>{if(!gameStarted)return;paused=!paused;if(paused){cancelDrivePointer();keys.Shift=0;P.bo=0;trackAudio.pause();clearTimeout(tmr)}$('pause').classList.toggle('on',paused);if(AC){if(paused)AC.suspend();else{AC.resume();if(customTrackActive&&playing)resumeCustomAudio();else if(playing)sched()}}};
 SONGS.push({rn:0,sn:0,st:0,lf:0,td:.7,bn:0,fl:0,tf:0,bl:.5,n:'Neon Overdrive',m:'Energetic',e:'🎸',r:45,mi:1,b:112,top:'#2a1050',bot:'#ff7a3d',fog:.012,sun:[.1,.15,-1],sc:'#ff9a5a',si:.7,hm:.55,g:'#3a4a40',tr:'#2f4a3a',w:'sawtooth',pp:.9});
