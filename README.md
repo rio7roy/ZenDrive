@@ -1,5 +1,5 @@
 # ZENDRIVE
-https://hack4hack.com/hackathons/agentx-hackathon-2026-hooc?join=6D9A9B
+
 All eight MP3 files you supplied are INCLUDED in their climate folders. The game works by extracting this ZIP and **double-clicking `index.html`** in Chrome or Edge, without Python or a local server. Keep the `music` directory beside `index.html` (do not open `index.html` from within the ZIP preview).
 
 ## Play
